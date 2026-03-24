@@ -59,9 +59,12 @@ MonoBehaviour:
   minTargetDistance: 1
   hoverAmplitude: 0.08
   hoverFrequency: 3
-  propellerSpinSpeed: 720
+  propellerAccelerationSpeed: 1080
+  propellerMaxRotationSpeed: 720
+  propellerDecelerationSpeed: 540
+  propellerLandingInertia: 360
   maxTiltAngle: 12
-  tiltSmoothness: 10
+  tiltSmoothingSpeed: 10
   drawCurrentTargetGizmo: 1
 --- !u!1001 &2976823322656867126
 PrefabInstance:

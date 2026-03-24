@@ -30,9 +30,12 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     [Header("Visuals")]
     [SerializeField] private float hoverAmplitude = 0.08f;
     [SerializeField] private float hoverFrequency = 3f;
-    [SerializeField] private float propellerSpinSpeed = 720f;
+    [SerializeField] private float propellerAccelerationSpeed = 1080f;
+    [SerializeField] private float propellerMaxRotationSpeed = 720f;
+    [SerializeField] private float propellerDecelerationSpeed = 540f;
+    [SerializeField] private float propellerLandingInertia = 360f;
     [SerializeField] private float maxTiltAngle = 12f;
-    [SerializeField] private float tiltSmoothness = 10f;
+    [SerializeField] private float tiltSmoothingSpeed = 10f;
 
     [Header("Debug")]
     [SerializeField] private bool drawCurrentTargetGizmo = true;
@@ -46,6 +49,10 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     private Vector3 planarVelocity;
     private float stateTimer;
     private float currentIdleDuration;
+    private float currentPropellerSpeed;
+    private float propellerInertiaSpeed;
+    private float currentTiltAngleX;
+    private float currentTiltAngleZ;
 
     public Transform PropellerTransform => propellerTransform;
     public Transform VisualBodyTransform => visualBodyTransform;
@@ -73,9 +80,12 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         minTargetDistance = Mathf.Max(0f, minTargetDistance);
         hoverAmplitude = Mathf.Max(0f, hoverAmplitude);
         hoverFrequency = Mathf.Max(0f, hoverFrequency);
-        propellerSpinSpeed = Mathf.Max(0f, propellerSpinSpeed);
+        propellerAccelerationSpeed = Mathf.Max(0f, propellerAccelerationSpeed);
+        propellerMaxRotationSpeed = Mathf.Max(0f, propellerMaxRotationSpeed);
+        propellerDecelerationSpeed = Mathf.Max(0f, propellerDecelerationSpeed);
+        propellerLandingInertia = Mathf.Max(0f, propellerLandingInertia);
         maxTiltAngle = Mathf.Max(0f, maxTiltAngle);
-        tiltSmoothness = Mathf.Max(0.01f, tiltSmoothness);
+        tiltSmoothingSpeed = Mathf.Max(0.01f, tiltSmoothingSpeed);
     }
 
     private void Update()
@@ -234,7 +244,62 @@ public sealed class VertoBallBehaviour : MonoBehaviour
 
     private void AnimatePropeller()
     {
-        propellerTransform.Rotate(Vector3.up, propellerSpinSpeed * Time.deltaTime, Space.Self);
+        UpdatePropellerSpeed();
+        propellerTransform.Rotate(Vector3.up, currentPropellerSpeed * Time.deltaTime, Space.Self);
+    }
+
+    private void UpdatePropellerSpeed()
+    {
+        var desiredSpeed = GetDesiredPropellerSpeed();
+
+        if (currentState == VertoBallState.Landing)
+        {
+            propellerInertiaSpeed = Mathf.Max(propellerInertiaSpeed, propellerLandingInertia);
+        }
+
+        if (desiredSpeed > currentPropellerSpeed)
+        {
+            currentPropellerSpeed = Mathf.MoveTowards(
+                currentPropellerSpeed,
+                desiredSpeed,
+                propellerAccelerationSpeed * Time.deltaTime);
+
+            return;
+        }
+
+        var inertiaContribution = 0f;
+        if (propellerInertiaSpeed > 0f)
+        {
+            propellerInertiaSpeed = Mathf.MoveTowards(
+                propellerInertiaSpeed,
+                0f,
+                propellerDecelerationSpeed * Time.deltaTime);
+
+            inertiaContribution = propellerInertiaSpeed;
+        }
+
+        var targetSpeed = Mathf.Max(desiredSpeed, inertiaContribution);
+        currentPropellerSpeed = Mathf.MoveTowards(
+            currentPropellerSpeed,
+            targetSpeed,
+            propellerDecelerationSpeed * Time.deltaTime);
+    }
+
+    private float GetDesiredPropellerSpeed()
+    {
+        switch (currentState)
+        {
+            case VertoBallState.Idle:
+                return 0f;
+            case VertoBallState.Takeoff:
+                return propellerMaxRotationSpeed * Mathf.Clamp01(stateTimer / takeoffDuration);
+            case VertoBallState.Flying:
+                return propellerMaxRotationSpeed;
+            case VertoBallState.Landing:
+                return propellerMaxRotationSpeed * (1f - Mathf.Clamp01(stateTimer / landingDuration));
+            default:
+                return 0f;
+        }
     }
 
     private void AnimateBody(Vector3 previousPosition)
@@ -259,16 +324,22 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     {
         var localVelocity = transform.InverseTransformDirection(planarVelocity);
         var normalizedVelocity = Vector3.ClampMagnitude(localVelocity / Mathf.Max(movementSpeed, 0.01f), 1f);
+        var targetTiltX = normalizedVelocity.z * maxTiltAngle;
+        var targetTiltZ = -normalizedVelocity.x * maxTiltAngle;
 
-        var targetTilt = Quaternion.Euler(
-            normalizedVelocity.z * maxTiltAngle,
-            0f,
-            -normalizedVelocity.x * maxTiltAngle);
+        currentTiltAngleX = Mathf.Lerp(currentTiltAngleX, targetTiltX, tiltSmoothingSpeed * Time.deltaTime);
+        currentTiltAngleZ = Mathf.Lerp(currentTiltAngleZ, targetTiltZ, tiltSmoothingSpeed * Time.deltaTime);
+
+        var pivotOffset = Vector3.up * baseLocalPosition.y;
+        var targetTilt = Quaternion.Euler(currentTiltAngleX, 0f, currentTiltAngleZ);
+        var tiltedBodyOffset = targetTilt * -pivotOffset;
 
         visualBodyTransform.localRotation = Quaternion.Slerp(
             visualBodyTransform.localRotation,
             bodyBaseLocalRotation * targetTilt,
-            tiltSmoothness * Time.deltaTime);
+            tiltSmoothingSpeed * Time.deltaTime);
+
+        visualBodyTransform.localPosition += pivotOffset + tiltedBodyOffset;
     }
 
     private void CacheReferences()
