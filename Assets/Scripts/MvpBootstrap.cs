@@ -34,11 +34,11 @@ public sealed class MvpBootstrap : MonoBehaviour
             return;
         }
 
-        sceneCamera.orthographic = true;
-        sceneCamera.orthographicSize = 6f;
+        sceneCamera.orthographic = false;
+        sceneCamera.fieldOfView = 60f;
         sceneCamera.backgroundColor = new Color(0.73f, 0.9f, 0.76f);
-        transform.position = new Vector3(0f, 10f, 0f);
-        transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        transform.position = new Vector3(0f, 5f, -3f);
+        transform.rotation = Quaternion.Euler(60f, 0f, 0f);
     }
 
     private static void CreateFloor()
