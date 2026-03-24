@@ -3,6 +3,7 @@ using UnityEngine;
 public sealed class MvpBootstrap : MonoBehaviour
 {
     private const string HoleName = "Hole";
+    private const string FloorName = "Floor";
     private const string ObjectName = "SwallowableObject";
 
     private void Awake()
@@ -12,6 +13,11 @@ public sealed class MvpBootstrap : MonoBehaviour
         if (FindAnyObjectByType<HoleController>() == null)
         {
             CreateHole();
+        }
+
+        if (GameObject.Find(FloorName) == null)
+        {
+            CreateFloor();
         }
 
         if (FindAnyObjectByType<SwallowableObject>() == null)
@@ -32,6 +38,17 @@ public sealed class MvpBootstrap : MonoBehaviour
         sceneCamera.orthographicSize = 5f;
         sceneCamera.backgroundColor = new Color(0.73f, 0.9f, 0.76f);
         transform.position = new Vector3(0f, 0f, -10f);
+    }
+
+    private static void CreateFloor()
+    {
+        var floor = new GameObject(FloorName);
+        floor.transform.position = new Vector3(0f, 0f, 1f);
+        floor.transform.localScale = new Vector3(12f, 12f, 1f);
+
+        var spriteRenderer = floor.AddComponent<SpriteRenderer>();
+        spriteRenderer.sprite = SpriteFactory.CreateSquareSprite(32, new Color(0.47f, 0.73f, 0.42f));
+        spriteRenderer.sortingOrder = -10;
     }
 
     private static void CreateHole()
