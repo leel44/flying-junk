@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2741640699346775045}
+  - component: {fileID: 7575917887559298747}
   m_Layer: 0
   m_Name: VertoBall
   m_TagString: Untagged
@@ -33,6 +34,26 @@ Transform:
   - {fileID: 7471314646730885777}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7575917887559298747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2183755029918932941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d84dc20b30f2417d83b39ea1c0d53676, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  propellerTransform: {fileID: 7471314646730885777}
+  visualBodyTransform: {fileID: 3370227951624971485}
+  hoverAmplitude: 0.08
+  hoverFrequency: 1.5
+  propellerSpinSpeed: 720
+  maxTiltAngle: 12
+  tiltSmoothness: 10
+  debugPlanarVelocity: {x: 0, y: 0, z: 0}
 --- !u!1001 &2976823322656867126
 PrefabInstance:
   m_ObjectHideFlags: 0
