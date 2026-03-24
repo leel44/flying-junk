@@ -3,6 +3,8 @@ using UnityEngine;
 
 public sealed class VertoBallSpawnManager : MonoBehaviour
 {
+    private const string FloorObjectName = "Floor";
+
     [Header("Prefab")]
     [SerializeField] private VertoBallBehaviour vertoBallPrefab;
     [SerializeField] private bool keepManualTestInstance = true;
@@ -21,9 +23,13 @@ public sealed class VertoBallSpawnManager : MonoBehaviour
     [SerializeField] private float flightRadius = 4f;
 
     private readonly List<Vector3> occupiedSpawnPositions = new List<Vector3>();
+    private readonly Collider[] spawnCheckBuffer = new Collider[8];
+    private Transform floorTransform;
+    private Collider floorCollider;
 
     private void Start()
     {
+        CacheFloorReferences();
         occupiedSpawnPositions.Clear();
 
         if (keepManualTestInstance)
@@ -102,11 +108,54 @@ public sealed class VertoBallSpawnManager : MonoBehaviour
         }
 
         var overlapPosition = candidate + Vector3.up * spawnCheckRadius;
-        return !Physics.CheckSphere(
+        var overlapCount = Physics.OverlapSphereNonAlloc(
             overlapPosition,
             spawnCheckRadius,
+            spawnCheckBuffer,
             spawnObstacleLayers,
             QueryTriggerInteraction.Ignore);
+
+        for (var i = 0; i < overlapCount; i++)
+        {
+            var hitCollider = spawnCheckBuffer[i];
+            if (hitCollider == null || IsIgnoredSpawnCollider(hitCollider))
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private void CacheFloorReferences()
+    {
+        if (floorTransform != null)
+        {
+            return;
+        }
+
+        var floorObject = GameObject.Find(FloorObjectName);
+        if (floorObject == null)
+        {
+            return;
+        }
+
+        floorTransform = floorObject.transform;
+        floorCollider = floorObject.GetComponent<Collider>();
+    }
+
+    private bool IsIgnoredSpawnCollider(Collider hitCollider)
+    {
+        CacheFloorReferences();
+
+        if (floorCollider != null && hitCollider == floorCollider)
+        {
+            return true;
+        }
+
+        return floorTransform != null && hitCollider.transform.IsChildOf(floorTransform);
     }
 
     private void OnDrawGizmosSelected()

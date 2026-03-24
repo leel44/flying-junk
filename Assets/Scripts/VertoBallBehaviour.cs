@@ -98,6 +98,10 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         CacheReferences();
         CacheVisualState();
         CacheFloorReferences();
+    }
+
+    private void Start()
+    {
         if (!initializedBySpawnManager)
         {
             Debug.LogWarning(
@@ -530,7 +534,7 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         for (var i = 0; i < hitCount; i++)
         {
             var hitCollider = pathHitBuffer[i].collider;
-            if (hitCollider == null || hitCollider.transform.IsChildOf(transform))
+            if (hitCollider == null || IsIgnoredObstacleCollider(hitCollider))
             {
                 continue;
             }
@@ -554,7 +558,7 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         for (var i = 0; i < overlapCount; i++)
         {
             var colliderHit = landingCheckBuffer[i];
-            if (colliderHit == null || colliderHit.transform.IsChildOf(transform))
+            if (colliderHit == null || IsIgnoredObstacleCollider(colliderHit))
             {
                 continue;
             }
@@ -563,6 +567,23 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         }
 
         return true;
+    }
+
+    private bool IsIgnoredObstacleCollider(Collider hitCollider)
+    {
+        if (hitCollider.transform.IsChildOf(transform))
+        {
+            return true;
+        }
+
+        CacheFloorReferences();
+
+        if (floorCollider != null && hitCollider == floorCollider)
+        {
+            return true;
+        }
+
+        return floorTransform != null && hitCollider.transform.IsChildOf(floorTransform);
     }
 
     private void OnDrawGizmosSelected()
