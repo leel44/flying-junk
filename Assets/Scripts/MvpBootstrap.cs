@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public sealed class MvpBootstrap : MonoBehaviour
 {
@@ -93,14 +94,93 @@ public sealed class HoleController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float clampPadding = 0.75f;
+    [SerializeField] private float targetStopDistance = 0.05f;
 
     private readonly Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
-    private Vector3 lastPointerWorldPosition;
-    private bool hasActiveDrag;
+    private Vector3 targetPosition;
+    private bool hasPointerTarget;
+    private float holeY;
+
+    private void Awake()
+    {
+        holeY = transform.position.y;
+        targetPosition = transform.position;
+    }
 
     private void Update()
     {
-        var input = ReadMovementInput();
+        if (TryUpdatePointerTarget())
+        {
+            MoveTowardsPointerTarget();
+        }
+        else
+        {
+            MoveWithKeyboardFallback();
+        }
+
+        ClampInsideFloor();
+    }
+
+    private bool TryUpdatePointerTarget()
+    {
+        if (!TryGetPointerScreenPosition(out var screenPosition))
+        {
+            hasPointerTarget = false;
+            return false;
+        }
+
+        if (!TryGetWorldPointOnGround(screenPosition, out var worldPoint))
+        {
+            return false;
+        }
+
+        targetPosition = new Vector3(worldPoint.x, holeY, worldPoint.z);
+        hasPointerTarget = true;
+        return true;
+    }
+
+    private bool TryGetPointerScreenPosition(out Vector2 screenPosition)
+    {
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+        {
+            screenPosition = Touchscreen.current.primaryTouch.position.ReadValue();
+            return true;
+        }
+
+        if (Mouse.current != null && Mouse.current.leftButton.isPressed)
+        {
+            screenPosition = Mouse.current.position.ReadValue();
+            return true;
+        }
+
+        screenPosition = Vector2.zero;
+        return false;
+    }
+
+    private void MoveTowardsPointerTarget()
+    {
+        if (!hasPointerTarget)
+        {
+            return;
+        }
+
+        var currentPosition = transform.position;
+        var currentFlatPosition = new Vector3(currentPosition.x, holeY, currentPosition.z);
+        var targetFlatPosition = new Vector3(targetPosition.x, holeY, targetPosition.z);
+
+        if (Vector3.Distance(currentFlatPosition, targetFlatPosition) <= targetStopDistance)
+        {
+            transform.position = targetFlatPosition;
+            return;
+        }
+
+        var nextPosition = Vector3.MoveTowards(currentFlatPosition, targetFlatPosition, moveSpeed * Time.deltaTime);
+        transform.position = nextPosition;
+    }
+
+    private void MoveWithKeyboardFallback()
+    {
+        var input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         if (input.sqrMagnitude > 1f)
         {
             input.Normalize();
@@ -108,121 +188,6 @@ public sealed class HoleController : MonoBehaviour
 
         var delta = new Vector3(input.x, 0f, input.y) * (moveSpeed * Time.deltaTime);
         transform.position += delta;
-        ClampInsideFloor();
-    }
-
-    private Vector2 ReadMovementInput()
-    {
-        if (TryReadTouchDrag(out var touchInput, out var touchHandled))
-        {
-            return touchInput;
-        }
-
-        if (touchHandled)
-        {
-            return Vector2.zero;
-        }
-
-        if (TryReadMouseDrag(out var mouseInput, out var mouseHandled))
-        {
-            return mouseInput;
-        }
-
-        if (mouseHandled)
-        {
-            return Vector2.zero;
-        }
-
-        return new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-    }
-
-    private bool TryReadTouchDrag(out Vector2 input, out bool handled)
-    {
-        if (Input.touchCount == 0)
-        {
-            hasActiveDrag = false;
-            input = Vector2.zero;
-            handled = false;
-            return false;
-        }
-
-        handled = true;
-        var touch = Input.GetTouch(0);
-
-        if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
-        {
-            hasActiveDrag = false;
-            input = Vector2.zero;
-            return false;
-        }
-
-        if (!TryGetWorldPointOnGround(touch.position, out var worldPoint))
-        {
-            if (touch.phase == TouchPhase.Began)
-            {
-                hasActiveDrag = false;
-            }
-
-            input = Vector2.zero;
-            return false;
-        }
-
-        if (touch.phase == TouchPhase.Began || !hasActiveDrag)
-        {
-            lastPointerWorldPosition = worldPoint;
-            hasActiveDrag = true;
-            input = Vector2.zero;
-            return true;
-        }
-
-        var delta = worldPoint - lastPointerWorldPosition;
-        lastPointerWorldPosition = worldPoint;
-        input = new Vector2(delta.x, delta.z) / Mathf.Max(moveSpeed * Time.deltaTime, 0.0001f);
-        return true;
-    }
-
-    private bool TryReadMouseDrag(out Vector2 input, out bool handled)
-    {
-        if (Input.GetMouseButtonUp(0))
-        {
-            hasActiveDrag = false;
-            input = Vector2.zero;
-            handled = true;
-            return false;
-        }
-
-        if (!Input.GetMouseButton(0))
-        {
-            hasActiveDrag = false;
-            input = Vector2.zero;
-            handled = false;
-            return false;
-        }
-
-        handled = true;
-        if (!TryGetWorldPointOnGround(Input.mousePosition, out var worldPoint))
-        {
-            if (Input.GetMouseButtonDown(0))
-            {
-                hasActiveDrag = false;
-            }
-
-            input = Vector2.zero;
-            return false;
-        }
-
-        if (Input.GetMouseButtonDown(0) || !hasActiveDrag)
-        {
-            lastPointerWorldPosition = worldPoint;
-            hasActiveDrag = true;
-            input = Vector2.zero;
-            return true;
-        }
-
-        var delta = worldPoint - lastPointerWorldPosition;
-        lastPointerWorldPosition = worldPoint;
-        input = new Vector2(delta.x, delta.z) / Mathf.Max(moveSpeed * Time.deltaTime, 0.0001f);
-        return true;
     }
 
     private bool TryGetWorldPointOnGround(Vector2 screenPosition, out Vector3 worldPoint)
@@ -260,7 +225,7 @@ public sealed class HoleController : MonoBehaviour
         var position = transform.position;
         position.x = Mathf.Clamp(position.x, -5f + clampPadding, 5f - clampPadding);
         position.z = Mathf.Clamp(position.z, -5f + clampPadding, 5f - clampPadding);
-        position.y = 0.05f;
+        position.y = holeY;
 
         transform.position = position;
     }
