@@ -4,7 +4,6 @@ using UnityEngine.InputSystem;
 public sealed class MvpBootstrap : MonoBehaviour
 {
     private const string HoleName = "Hole";
-    private const string FloorName = "Floor";
     private const string ObjectName = "SwallowableObject";
 
     private void Awake()
@@ -16,11 +15,6 @@ public sealed class MvpBootstrap : MonoBehaviour
         }
 
         SetupCamera(holeController != null ? holeController.transform : null);
-
-        if (GameObject.Find(FloorName) == null)
-        {
-            CreateFloor();
-        }
 
         if (FindAnyObjectByType<SwallowableObject>() == null)
         {
@@ -52,18 +46,6 @@ public sealed class MvpBootstrap : MonoBehaviour
         {
             cameraFollow.Configure(holeTransform, transform.position - holeTransform.position);
         }
-    }
-
-    private static void CreateFloor()
-    {
-        var floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        floor.name = FloorName;
-        floor.transform.position = Vector3.zero;
-        floor.transform.localScale = new Vector3(1.2f, 1f, 1.2f);
-
-        var renderer = floor.GetComponent<Renderer>();
-        renderer.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-        renderer.material.color = new Color(0.47f, 0.73f, 0.42f);
     }
 
     private static HoleController CreateHole()
