@@ -60,32 +60,44 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     private float currentTiltAngleZ;
     private readonly RaycastHit[] pathHitBuffer = new RaycastHit[8];
     private readonly Collider[] landingCheckBuffer = new Collider[8];
+    private bool initializedBySpawnManager;
+    private bool hasCompletedInitialization;
 
     public Transform PropellerTransform => propellerTransform;
     public Transform VisualBodyTransform => visualBodyTransform;
 
-    public void ApplyRuntimeSettings(float configuredMinIdleTime, float configuredMaxIdleTime, float configuredFlightRadius)
+    public void Initialize(float configuredMinIdleTime, float configuredMaxIdleTime, float configuredFlightRadius, bool fromSpawnManager)
     {
         minIdleTime = Mathf.Max(0f, configuredMinIdleTime);
         maxIdleTime = Mathf.Max(minIdleTime, configuredMaxIdleTime);
         flightRadius = Mathf.Max(0f, configuredFlightRadius);
+        initializedBySpawnManager = fromSpawnManager;
 
         if (!Application.isPlaying)
         {
             return;
         }
 
-        groundPosition = transform.position;
-        BeginIdle();
+        CompleteInitialization();
+    }
+
+    public void ApplyRuntimeSettings(float configuredMinIdleTime, float configuredMaxIdleTime, float configuredFlightRadius)
+    {
+        Initialize(configuredMinIdleTime, configuredMaxIdleTime, configuredFlightRadius, true);
     }
 
     private void Awake()
     {
         CacheReferences();
         CacheVisualState();
-        groundPosition = transform.position;
-        targetPosition = groundPosition;
-        BeginIdle();
+        if (!initializedBySpawnManager)
+        {
+            Debug.LogWarning(
+                $"VertoBall '{name}' was not initialized by VertoBallSpawnManager. Applying self-initialization using its serialized settings.",
+                this);
+        }
+
+        CompleteInitialization();
     }
 
     private void OnValidate()
@@ -110,6 +122,19 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         propellerLandingInertia = Mathf.Max(0f, propellerLandingInertia);
         maxTiltAngle = Mathf.Max(0f, maxTiltAngle);
         tiltSmoothingSpeed = Mathf.Max(0.01f, tiltSmoothingSpeed);
+    }
+
+    private void CompleteInitialization()
+    {
+        if (hasCompletedInitialization)
+        {
+            return;
+        }
+
+        groundPosition = transform.position;
+        targetPosition = groundPosition;
+        BeginIdle();
+        hasCompletedInitialization = true;
     }
 
     private void Update()

@@ -68,7 +68,7 @@ public sealed class VertoBallSpawnManager : MonoBehaviour
             return;
         }
 
-        instance.ApplyRuntimeSettings(minIdleTime, maxIdleTime, flightRadius);
+        instance.Initialize(minIdleTime, maxIdleTime, flightRadius, true);
     }
 
     private bool TryGetSpawnPosition(out Vector3 spawnPosition)
