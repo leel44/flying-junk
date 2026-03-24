@@ -86,6 +86,8 @@ public sealed class MvpBootstrap : MonoBehaviour
 
 public sealed class HoleController : MonoBehaviour
 {
+    private const string FloorObjectName = "Floor";
+
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float clampPadding = 0.75f;
     [SerializeField] private float targetStopDistance = 0.05f;
@@ -94,11 +96,16 @@ public sealed class HoleController : MonoBehaviour
     private Vector3 targetPosition;
     private bool hasPointerTarget;
     private float holeY;
+    private bool hasWarnedAboutMissingFloor;
+    private Transform floorTransform;
+    private Collider floorCollider;
+    private Renderer floorRenderer;
 
     private void Awake()
     {
         holeY = transform.position.y;
         targetPosition = transform.position;
+        CacheFloorReferences();
     }
 
     private void Update()
@@ -218,11 +225,61 @@ public sealed class HoleController : MonoBehaviour
     private void ClampInsideFloor()
     {
         var position = transform.position;
-        position.x = Mathf.Clamp(position.x, -5f + clampPadding, 5f - clampPadding);
-        position.z = Mathf.Clamp(position.z, -5f + clampPadding, 5f - clampPadding);
+        if (TryGetFloorBounds(out var floorBounds))
+        {
+            position.x = Mathf.Clamp(position.x, floorBounds.min.x + clampPadding, floorBounds.max.x - clampPadding);
+            position.z = Mathf.Clamp(position.z, floorBounds.min.z + clampPadding, floorBounds.max.z - clampPadding);
+        }
+
         position.y = holeY;
 
         transform.position = position;
+    }
+
+    private void CacheFloorReferences()
+    {
+        if (floorTransform != null)
+        {
+            return;
+        }
+
+        var floorObject = GameObject.Find(FloorObjectName);
+        if (floorObject == null)
+        {
+            return;
+        }
+
+        floorTransform = floorObject.transform;
+        floorCollider = floorObject.GetComponent<Collider>();
+        floorRenderer = floorObject.GetComponent<Renderer>();
+    }
+
+    private bool TryGetFloorBounds(out Bounds floorBounds)
+    {
+        CacheFloorReferences();
+
+        if (floorCollider != null)
+        {
+            floorBounds = floorCollider.bounds;
+            return true;
+        }
+
+        if (floorRenderer != null)
+        {
+            floorBounds = floorRenderer.bounds;
+            return true;
+        }
+
+        if (!hasWarnedAboutMissingFloor)
+        {
+            Debug.LogWarning(
+                "HoleController could not find a usable 'Floor' object with a Collider or Renderer. Floor-based movement bounds are disabled.",
+                this);
+            hasWarnedAboutMissingFloor = true;
+        }
+
+        floorBounds = default;
+        return false;
     }
 }
 
