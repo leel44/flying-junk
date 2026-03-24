@@ -93,10 +93,10 @@ public sealed class HoleController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float clampPadding = 0.75f;
-    [SerializeField] private float dragSensitivity = 0.025f;
 
-    private Vector2 lastPointerPosition;
-    private bool hasPointerPosition;
+    private readonly Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+    private Vector3 lastPointerWorldPosition;
+    private bool hasActiveDrag;
 
     private void Update()
     {
@@ -113,78 +113,135 @@ public sealed class HoleController : MonoBehaviour
 
     private Vector2 ReadMovementInput()
     {
-        if (TryReadTouchDrag(out var touchInput))
+        if (TryReadTouchDrag(out var touchInput, out var touchHandled))
         {
             return touchInput;
         }
 
-        if (TryReadMouseDrag(out var mouseInput))
+        if (touchHandled)
+        {
+            return Vector2.zero;
+        }
+
+        if (TryReadMouseDrag(out var mouseInput, out var mouseHandled))
         {
             return mouseInput;
+        }
+
+        if (mouseHandled)
+        {
+            return Vector2.zero;
         }
 
         return new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
     }
 
-    private bool TryReadTouchDrag(out Vector2 input)
+    private bool TryReadTouchDrag(out Vector2 input, out bool handled)
     {
         if (Input.touchCount == 0)
         {
-            hasPointerPosition = false;
+            hasActiveDrag = false;
             input = Vector2.zero;
+            handled = false;
             return false;
         }
 
+        handled = true;
         var touch = Input.GetTouch(0);
-        if (touch.phase == TouchPhase.Began)
-        {
-            lastPointerPosition = touch.position;
-            hasPointerPosition = true;
-            input = Vector2.zero;
-            return true;
-        }
-
-        if (!hasPointerPosition)
-        {
-            lastPointerPosition = touch.position;
-            hasPointerPosition = true;
-        }
-
-        var delta = touch.position - lastPointerPosition;
-        lastPointerPosition = touch.position;
 
         if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
         {
-            hasPointerPosition = false;
+            hasActiveDrag = false;
             input = Vector2.zero;
             return false;
         }
 
-        input = delta * dragSensitivity;
-        return true;
-    }
-
-    private bool TryReadMouseDrag(out Vector2 input)
-    {
-        if (!Input.GetMouseButton(0))
+        if (!TryGetWorldPointOnGround(touch.position, out var worldPoint))
         {
-            hasPointerPosition = false;
+            if (touch.phase == TouchPhase.Began)
+            {
+                hasActiveDrag = false;
+            }
+
             input = Vector2.zero;
             return false;
         }
 
-        var mousePosition = (Vector2)Input.mousePosition;
-        if (!hasPointerPosition)
+        if (touch.phase == TouchPhase.Began || !hasActiveDrag)
         {
-            lastPointerPosition = mousePosition;
-            hasPointerPosition = true;
+            lastPointerWorldPosition = worldPoint;
+            hasActiveDrag = true;
             input = Vector2.zero;
             return true;
         }
 
-        var delta = mousePosition - lastPointerPosition;
-        lastPointerPosition = mousePosition;
-        input = delta * dragSensitivity;
+        var delta = worldPoint - lastPointerWorldPosition;
+        lastPointerWorldPosition = worldPoint;
+        input = new Vector2(delta.x, delta.z) / Mathf.Max(moveSpeed * Time.deltaTime, 0.0001f);
+        return true;
+    }
+
+    private bool TryReadMouseDrag(out Vector2 input, out bool handled)
+    {
+        if (Input.GetMouseButtonUp(0))
+        {
+            hasActiveDrag = false;
+            input = Vector2.zero;
+            handled = true;
+            return false;
+        }
+
+        if (!Input.GetMouseButton(0))
+        {
+            hasActiveDrag = false;
+            input = Vector2.zero;
+            handled = false;
+            return false;
+        }
+
+        handled = true;
+        if (!TryGetWorldPointOnGround(Input.mousePosition, out var worldPoint))
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                hasActiveDrag = false;
+            }
+
+            input = Vector2.zero;
+            return false;
+        }
+
+        if (Input.GetMouseButtonDown(0) || !hasActiveDrag)
+        {
+            lastPointerWorldPosition = worldPoint;
+            hasActiveDrag = true;
+            input = Vector2.zero;
+            return true;
+        }
+
+        var delta = worldPoint - lastPointerWorldPosition;
+        lastPointerWorldPosition = worldPoint;
+        input = new Vector2(delta.x, delta.z) / Mathf.Max(moveSpeed * Time.deltaTime, 0.0001f);
+        return true;
+    }
+
+    private bool TryGetWorldPointOnGround(Vector2 screenPosition, out Vector3 worldPoint)
+    {
+        var sceneCamera = Camera.main;
+        if (sceneCamera == null)
+        {
+            worldPoint = Vector3.zero;
+            return false;
+        }
+
+        var ray = sceneCamera.ScreenPointToRay(screenPosition);
+        if (!groundPlane.Raycast(ray, out var enter))
+        {
+            worldPoint = Vector3.zero;
+            return false;
+        }
+
+        worldPoint = ray.GetPoint(enter);
         return true;
     }
 
