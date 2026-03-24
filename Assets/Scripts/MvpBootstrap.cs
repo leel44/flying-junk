@@ -93,10 +93,14 @@ public sealed class HoleController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float clampPadding = 0.75f;
+    [SerializeField] private float dragSensitivity = 0.025f;
+
+    private Vector2 lastPointerPosition;
+    private bool hasPointerPosition;
 
     private void Update()
     {
-        var input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        var input = ReadMovementInput();
         if (input.sqrMagnitude > 1f)
         {
             input.Normalize();
@@ -105,6 +109,83 @@ public sealed class HoleController : MonoBehaviour
         var delta = new Vector3(input.x, 0f, input.y) * (moveSpeed * Time.deltaTime);
         transform.position += delta;
         ClampInsideFloor();
+    }
+
+    private Vector2 ReadMovementInput()
+    {
+        if (TryReadTouchDrag(out var touchInput))
+        {
+            return touchInput;
+        }
+
+        if (TryReadMouseDrag(out var mouseInput))
+        {
+            return mouseInput;
+        }
+
+        return new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+    }
+
+    private bool TryReadTouchDrag(out Vector2 input)
+    {
+        if (Input.touchCount == 0)
+        {
+            hasPointerPosition = false;
+            input = Vector2.zero;
+            return false;
+        }
+
+        var touch = Input.GetTouch(0);
+        if (touch.phase == TouchPhase.Began)
+        {
+            lastPointerPosition = touch.position;
+            hasPointerPosition = true;
+            input = Vector2.zero;
+            return true;
+        }
+
+        if (!hasPointerPosition)
+        {
+            lastPointerPosition = touch.position;
+            hasPointerPosition = true;
+        }
+
+        var delta = touch.position - lastPointerPosition;
+        lastPointerPosition = touch.position;
+
+        if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+        {
+            hasPointerPosition = false;
+            input = Vector2.zero;
+            return false;
+        }
+
+        input = delta * dragSensitivity;
+        return true;
+    }
+
+    private bool TryReadMouseDrag(out Vector2 input)
+    {
+        if (!Input.GetMouseButton(0))
+        {
+            hasPointerPosition = false;
+            input = Vector2.zero;
+            return false;
+        }
+
+        var mousePosition = (Vector2)Input.mousePosition;
+        if (!hasPointerPosition)
+        {
+            lastPointerPosition = mousePosition;
+            hasPointerPosition = true;
+            input = Vector2.zero;
+            return true;
+        }
+
+        var delta = mousePosition - lastPointerPosition;
+        lastPointerPosition = mousePosition;
+        input = delta * dragSensitivity;
+        return true;
     }
 
     private void OnTriggerEnter(Collider other)
