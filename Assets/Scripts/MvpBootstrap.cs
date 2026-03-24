@@ -35,53 +35,56 @@ public sealed class MvpBootstrap : MonoBehaviour
         }
 
         sceneCamera.orthographic = true;
-        sceneCamera.orthographicSize = 5f;
+        sceneCamera.orthographicSize = 6f;
         sceneCamera.backgroundColor = new Color(0.73f, 0.9f, 0.76f);
-        transform.position = new Vector3(0f, 0f, -10f);
+        transform.position = new Vector3(0f, 10f, 0f);
+        transform.rotation = Quaternion.Euler(90f, 0f, 0f);
     }
 
     private static void CreateFloor()
     {
-        var floor = new GameObject(FloorName);
-        floor.transform.position = new Vector3(0f, 0f, 1f);
-        floor.transform.localScale = new Vector3(12f, 12f, 1f);
+        var floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        floor.name = FloorName;
+        floor.transform.position = Vector3.zero;
+        floor.transform.localScale = new Vector3(1.2f, 1f, 1.2f);
 
-        var spriteRenderer = floor.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = SpriteFactory.CreateSquareSprite(32, new Color(0.47f, 0.73f, 0.42f));
-        spriteRenderer.sortingOrder = -10;
+        var renderer = floor.GetComponent<Renderer>();
+        renderer.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        renderer.material.color = new Color(0.47f, 0.73f, 0.42f);
     }
 
     private static void CreateHole()
     {
-        var hole = new GameObject(HoleName);
-        hole.transform.position = Vector3.zero;
-        hole.transform.localScale = new Vector3(1.1f, 1.1f, 1f);
+        var hole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        hole.name = HoleName;
+        hole.transform.position = new Vector3(0f, 0.05f, 0f);
+        hole.transform.localScale = new Vector3(1.1f, 0.05f, 1.1f);
 
-        var spriteRenderer = hole.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = SpriteFactory.CreateCircleSprite(64, new Color(0.08f, 0.08f, 0.08f));
-        spriteRenderer.sortingOrder = 1;
+        var renderer = hole.GetComponent<Renderer>();
+        renderer.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        renderer.material.color = new Color(0.08f, 0.08f, 0.08f);
 
-        var rigidbody2D = hole.AddComponent<Rigidbody2D>();
-        rigidbody2D.bodyType = RigidbodyType2D.Kinematic;
-        rigidbody2D.gravityScale = 0f;
+        var capsuleCollider = hole.GetComponent<CapsuleCollider>();
+        capsuleCollider.isTrigger = true;
 
-        var circleCollider = hole.AddComponent<CircleCollider2D>();
-        circleCollider.isTrigger = true;
-        circleCollider.radius = 0.45f;
+        var rigidbody = hole.AddComponent<Rigidbody>();
+        rigidbody.isKinematic = true;
+        rigidbody.useGravity = false;
 
         hole.AddComponent<HoleController>();
     }
 
     private static void CreateSwallowableObject()
     {
-        var swallowableObject = new GameObject(ObjectName);
-        swallowableObject.transform.position = new Vector3(2f, 1f, 0f);
-        swallowableObject.transform.localScale = new Vector3(0.9f, 0.9f, 1f);
+        var swallowableObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        swallowableObject.name = ObjectName;
+        swallowableObject.transform.position = new Vector3(2f, 0.5f, 1.5f);
+        swallowableObject.transform.localScale = new Vector3(0.9f, 0.9f, 0.9f);
 
-        var spriteRenderer = swallowableObject.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = SpriteFactory.CreateSquareSprite(32, new Color(1f, 0.85f, 0.35f));
+        var renderer = swallowableObject.GetComponent<Renderer>();
+        renderer.material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        renderer.material.color = new Color(1f, 0.85f, 0.35f);
 
-        swallowableObject.AddComponent<BoxCollider2D>();
         swallowableObject.AddComponent<SwallowableObject>();
     }
 }
@@ -89,7 +92,7 @@ public sealed class MvpBootstrap : MonoBehaviour
 public sealed class HoleController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float clampPadding = 0.55f;
+    [SerializeField] private float clampPadding = 0.75f;
 
     private void Update()
     {
@@ -99,11 +102,12 @@ public sealed class HoleController : MonoBehaviour
             input.Normalize();
         }
 
-        transform.position += (Vector3)(input * (moveSpeed * Time.deltaTime));
-        ClampInsideCamera();
+        var delta = new Vector3(input.x, 0f, input.y) * (moveSpeed * Time.deltaTime);
+        transform.position += delta;
+        ClampInsideFloor();
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerEnter(Collider other)
     {
         if (other.GetComponent<SwallowableObject>() == null)
         {
@@ -113,20 +117,12 @@ public sealed class HoleController : MonoBehaviour
         Destroy(other.gameObject);
     }
 
-    private void ClampInsideCamera()
+    private void ClampInsideFloor()
     {
-        var sceneCamera = Camera.main;
-        if (sceneCamera == null || !sceneCamera.orthographic)
-        {
-            return;
-        }
-
-        var halfHeight = sceneCamera.orthographicSize;
-        var halfWidth = halfHeight * sceneCamera.aspect;
         var position = transform.position;
-
-        position.x = Mathf.Clamp(position.x, -halfWidth + clampPadding, halfWidth - clampPadding);
-        position.y = Mathf.Clamp(position.y, -halfHeight + clampPadding, halfHeight - clampPadding);
+        position.x = Mathf.Clamp(position.x, -5f + clampPadding, 5f - clampPadding);
+        position.z = Mathf.Clamp(position.z, -5f + clampPadding, 5f - clampPadding);
+        position.y = 0.05f;
 
         transform.position = position;
     }
@@ -134,45 +130,4 @@ public sealed class HoleController : MonoBehaviour
 
 public sealed class SwallowableObject : MonoBehaviour
 {
-}
-
-internal static class SpriteFactory
-{
-    public static Sprite CreateCircleSprite(int size, Color color)
-    {
-        var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        texture.filterMode = FilterMode.Point;
-
-        var center = (size - 1) * 0.5f;
-        var radius = size * 0.5f;
-
-        for (var y = 0; y < size; y++)
-        {
-            for (var x = 0; x < size; x++)
-            {
-                var distance = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
-                texture.SetPixel(x, y, distance <= radius ? color : Color.clear);
-            }
-        }
-
-        texture.Apply();
-        return Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), size);
-    }
-
-    public static Sprite CreateSquareSprite(int size, Color color)
-    {
-        var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-        texture.filterMode = FilterMode.Point;
-
-        for (var y = 0; y < size; y++)
-        {
-            for (var x = 0; x < size; x++)
-            {
-                texture.SetPixel(x, y, color);
-            }
-        }
-
-        texture.Apply();
-        return Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), size);
-    }
 }
