@@ -48,12 +48,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   propellerTransform: {fileID: 7471314646730885777}
   visualBodyTransform: {fileID: 3370227951624971485}
+  minIdleTime: 1.5
+  maxIdleTime: 3
+  takeoffDuration: 0.6
+  landingDuration: 0.6
+  flightHeight: 1.25
+  movementSpeed: 2.5
+  flightRadius: 4
+  maxTargetSelectionRetries: 8
+  minTargetDistance: 1
   hoverAmplitude: 0.08
-  hoverFrequency: 1.5
+  hoverFrequency: 3
   propellerSpinSpeed: 720
   maxTiltAngle: 12
   tiltSmoothness: 10
-  debugPlanarVelocity: {x: 0, y: 0, z: 0}
+  drawCurrentTargetGizmo: 1
 --- !u!1001 &2976823322656867126
 PrefabInstance:
   m_ObjectHideFlags: 0
