@@ -2,6 +2,8 @@ using UnityEngine;
 
 public sealed class VertoBallBehaviour : MonoBehaviour
 {
+    private const string FloorObjectName = "Floor";
+
     private enum VertoBallState
     {
         Idle,
@@ -44,6 +46,7 @@ public sealed class VertoBallBehaviour : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool drawCurrentTargetGizmo = true;
+    [SerializeField] private bool drawFloorBoundsGizmo = true;
 
     private VertoBallState currentState = VertoBallState.Idle;
     private Vector3 groundPosition;
@@ -62,6 +65,10 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     private readonly Collider[] landingCheckBuffer = new Collider[8];
     private bool initializedBySpawnManager;
     private bool hasCompletedInitialization;
+    private bool hasWarnedAboutMissingFloor;
+    private Transform floorTransform;
+    private Collider floorCollider;
+    private Renderer floorRenderer;
 
     public Transform PropellerTransform => propellerTransform;
     public Transform VisualBodyTransform => visualBodyTransform;
@@ -90,6 +97,7 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     {
         CacheReferences();
         CacheVisualState();
+        CacheFloorReferences();
         if (!initializedBySpawnManager)
         {
             Debug.LogWarning(
@@ -103,6 +111,7 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     private void OnValidate()
     {
         CacheReferences();
+        CacheFloorReferences();
         minIdleTime = Mathf.Max(0f, minIdleTime);
         maxIdleTime = Mathf.Max(minIdleTime, maxIdleTime);
         takeoffDuration = Mathf.Max(0.01f, takeoffDuration);
@@ -174,7 +183,7 @@ public sealed class VertoBallBehaviour : MonoBehaviour
 
     private void UpdateIdle()
     {
-        transform.position = groundPosition;
+        transform.position = ConstrainPositionToFloor(groundPosition);
 
         if (stateTimer >= currentIdleDuration)
         {
@@ -186,7 +195,7 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     {
         var progress = Mathf.Clamp01(stateTimer / takeoffDuration);
         var liftedPosition = groundPosition + Vector3.up * (flightHeight * SmoothStep(progress));
-        transform.position = liftedPosition;
+        transform.position = ConstrainPositionToFloor(liftedPosition);
 
         if (progress >= 1f)
         {
@@ -210,7 +219,8 @@ public sealed class VertoBallBehaviour : MonoBehaviour
             return;
         }
 
-        transform.position = Vector3.MoveTowards(transform.position, desiredPosition, movementSpeed * Time.deltaTime);
+        transform.position = ConstrainPositionToFloor(
+            Vector3.MoveTowards(transform.position, desiredPosition, movementSpeed * Time.deltaTime));
 
         if (Vector3.Distance(transform.position, desiredPosition) <= 0.01f)
         {
@@ -222,11 +232,11 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     {
         var progress = Mathf.Clamp01(stateTimer / landingDuration);
         var landedPosition = Vector3.Lerp(stateStartPosition, targetPosition, SmoothStep(progress));
-        transform.position = landedPosition;
+        transform.position = ConstrainPositionToFloor(landedPosition);
 
         if (progress >= 1f)
         {
-            groundPosition = targetPosition;
+            groundPosition = ConstrainPositionToFloor(targetPosition);
             BeginIdle();
         }
     }
@@ -236,6 +246,7 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         currentState = VertoBallState.Idle;
         stateTimer = 0f;
         currentIdleDuration = Random.Range(minIdleTime, maxIdleTime);
+        groundPosition = ConstrainPositionToFloor(groundPosition);
         transform.position = groundPosition;
         targetPosition = groundPosition;
     }
@@ -258,7 +269,8 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         currentState = VertoBallState.Flying;
         stateTimer = 0f;
         targetPosition = nextTarget;
-        transform.position = new Vector3(transform.position.x, groundPosition.y + flightHeight, transform.position.z);
+        transform.position = ConstrainPositionToFloor(
+            new Vector3(transform.position.x, groundPosition.y + flightHeight, transform.position.z));
     }
 
     private void BeginLanding()
@@ -291,9 +303,14 @@ public sealed class VertoBallBehaviour : MonoBehaviour
 
     private bool IsValidTargetPosition(Vector3 candidate)
     {
-        var planarDistance = Vector3.Distance(
-            new Vector3(candidate.x, groundPosition.y, candidate.z),
-            new Vector3(groundPosition.x, groundPosition.y, groundPosition.z));
+        if (!IsInsideFloorXZ(candidate))
+        {
+            return false;
+        }
+
+        var planarDistance = Vector2.Distance(
+            new Vector2(candidate.x, candidate.z),
+            new Vector2(groundPosition.x, groundPosition.z));
 
         if (planarDistance < minTargetDistance)
         {
@@ -416,6 +433,77 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         }
     }
 
+    private void CacheFloorReferences()
+    {
+        if (floorTransform != null)
+        {
+            return;
+        }
+
+        var floorObject = GameObject.Find(FloorObjectName);
+        if (floorObject == null)
+        {
+            return;
+        }
+
+        floorTransform = floorObject.transform;
+        floorCollider = floorObject.GetComponent<Collider>();
+        floorRenderer = floorObject.GetComponent<Renderer>();
+    }
+
+    private bool TryGetFloorBounds(out Bounds floorBounds)
+    {
+        CacheFloorReferences();
+
+        if (floorCollider != null)
+        {
+            floorBounds = floorCollider.bounds;
+            return true;
+        }
+
+        if (floorRenderer != null)
+        {
+            floorBounds = floorRenderer.bounds;
+            return true;
+        }
+
+        if (!hasWarnedAboutMissingFloor)
+        {
+            Debug.LogWarning(
+                "VertoBall could not find a usable 'Floor' object with a Collider or Renderer. Floor-based movement bounds are disabled.",
+                this);
+            hasWarnedAboutMissingFloor = true;
+        }
+
+        floorBounds = default;
+        return false;
+    }
+
+    private bool IsInsideFloorXZ(Vector3 worldPosition)
+    {
+        if (!TryGetFloorBounds(out var floorBounds))
+        {
+            return true;
+        }
+
+        return worldPosition.x >= floorBounds.min.x &&
+               worldPosition.x <= floorBounds.max.x &&
+               worldPosition.z >= floorBounds.min.z &&
+               worldPosition.z <= floorBounds.max.z;
+    }
+
+    private Vector3 ConstrainPositionToFloor(Vector3 worldPosition)
+    {
+        if (!TryGetFloorBounds(out var floorBounds))
+        {
+            return worldPosition;
+        }
+
+        worldPosition.x = Mathf.Clamp(worldPosition.x, floorBounds.min.x, floorBounds.max.x);
+        worldPosition.z = Mathf.Clamp(worldPosition.z, floorBounds.min.z, floorBounds.max.z);
+        return worldPosition;
+    }
+
     private Vector3 GetFlightPosition(Vector3 worldPosition)
     {
         return new Vector3(worldPosition.x, groundPosition.y + flightHeight, worldPosition.z);
@@ -482,6 +570,14 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         Gizmos.color = Color.cyan;
         var gizmoCenter = Application.isPlaying ? groundPosition : transform.position;
         Gizmos.DrawWireSphere(gizmoCenter, flightRadius);
+
+        if (drawFloorBoundsGizmo && TryGetFloorBounds(out var floorBounds))
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireCube(
+                floorBounds.center,
+                new Vector3(floorBounds.size.x, 0.05f, floorBounds.size.z));
+        }
 
         if (!drawCurrentTargetGizmo)
         {
