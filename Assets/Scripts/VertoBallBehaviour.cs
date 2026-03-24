@@ -27,6 +27,11 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     [SerializeField] private int maxTargetSelectionRetries = 8;
     [SerializeField] private float minTargetDistance = 1f;
 
+    [Header("Avoidance")]
+    [SerializeField] private LayerMask obstacleLayers = ~0;
+    [SerializeField] private float pathCheckRadius = 0.35f;
+    [SerializeField] private float landingCheckRadius = 0.45f;
+
     [Header("Visuals")]
     [SerializeField] private float hoverAmplitude = 0.08f;
     [SerializeField] private float hoverFrequency = 3f;
@@ -53,9 +58,26 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     private float propellerInertiaSpeed;
     private float currentTiltAngleX;
     private float currentTiltAngleZ;
+    private readonly RaycastHit[] pathHitBuffer = new RaycastHit[8];
+    private readonly Collider[] landingCheckBuffer = new Collider[8];
 
     public Transform PropellerTransform => propellerTransform;
     public Transform VisualBodyTransform => visualBodyTransform;
+
+    public void ApplyRuntimeSettings(float configuredMinIdleTime, float configuredMaxIdleTime, float configuredFlightRadius)
+    {
+        minIdleTime = Mathf.Max(0f, configuredMinIdleTime);
+        maxIdleTime = Mathf.Max(minIdleTime, configuredMaxIdleTime);
+        flightRadius = Mathf.Max(0f, configuredFlightRadius);
+
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        groundPosition = transform.position;
+        BeginIdle();
+    }
 
     private void Awake()
     {
@@ -78,6 +100,8 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         flightRadius = Mathf.Max(0f, flightRadius);
         maxTargetSelectionRetries = Mathf.Max(1, maxTargetSelectionRetries);
         minTargetDistance = Mathf.Max(0f, minTargetDistance);
+        pathCheckRadius = Mathf.Max(0.01f, pathCheckRadius);
+        landingCheckRadius = Mathf.Max(0.01f, landingCheckRadius);
         hoverAmplitude = Mathf.Max(0f, hoverAmplitude);
         hoverFrequency = Mathf.Max(0f, hoverFrequency);
         propellerAccelerationSpeed = Mathf.Max(0f, propellerAccelerationSpeed);
@@ -148,6 +172,19 @@ public sealed class VertoBallBehaviour : MonoBehaviour
     private void UpdateFlying()
     {
         var desiredPosition = new Vector3(targetPosition.x, groundPosition.y + flightHeight, targetPosition.z);
+
+        if (IsFlightPathBlocked(transform.position, desiredPosition))
+        {
+            if (!TrySelectFlightTarget(out var alternateTarget))
+            {
+                BeginIdle();
+                return;
+            }
+
+            targetPosition = alternateTarget;
+            return;
+        }
+
         transform.position = Vector3.MoveTowards(transform.position, desiredPosition, movementSpeed * Time.deltaTime);
 
         if (Vector3.Distance(transform.position, desiredPosition) <= 0.01f)
@@ -238,8 +275,15 @@ public sealed class VertoBallBehaviour : MonoBehaviour
             return false;
         }
 
-        // Future obstacle avoidance can be added here before accepting a candidate.
-        return true;
+        var startFlightPosition = GetFlightPosition(transform.position);
+        var targetFlightPosition = GetFlightPosition(candidate);
+
+        if (IsFlightPathBlocked(startFlightPosition, targetFlightPosition))
+        {
+            return false;
+        }
+
+        return IsLandingAreaClear(candidate);
     }
 
     private void AnimatePropeller()
@@ -370,6 +414,67 @@ public sealed class VertoBallBehaviour : MonoBehaviour
             baseLocalPosition = visualBodyTransform.localPosition;
             bodyBaseLocalRotation = visualBodyTransform.localRotation;
         }
+    }
+
+    private Vector3 GetFlightPosition(Vector3 worldPosition)
+    {
+        return new Vector3(worldPosition.x, groundPosition.y + flightHeight, worldPosition.z);
+    }
+
+    private bool IsFlightPathBlocked(Vector3 startPosition, Vector3 endPosition)
+    {
+        var direction = endPosition - startPosition;
+        var distance = direction.magnitude;
+        if (distance <= 0.001f)
+        {
+            return false;
+        }
+
+        var hitCount = Physics.SphereCastNonAlloc(
+            startPosition,
+            pathCheckRadius,
+            direction.normalized,
+            pathHitBuffer,
+            distance,
+            obstacleLayers,
+            QueryTriggerInteraction.Ignore);
+
+        for (var i = 0; i < hitCount; i++)
+        {
+            var hitCollider = pathHitBuffer[i].collider;
+            if (hitCollider == null || hitCollider.transform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsLandingAreaClear(Vector3 candidate)
+    {
+        var checkPosition = candidate + Vector3.up * landingCheckRadius;
+        var overlapCount = Physics.OverlapSphereNonAlloc(
+            checkPosition,
+            landingCheckRadius,
+            landingCheckBuffer,
+            obstacleLayers,
+            QueryTriggerInteraction.Ignore);
+
+        for (var i = 0; i < overlapCount; i++)
+        {
+            var colliderHit = landingCheckBuffer[i];
+            if (colliderHit == null || colliderHit.transform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     private void OnDrawGizmosSelected()

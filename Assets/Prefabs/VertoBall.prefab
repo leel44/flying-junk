@@ -57,6 +57,11 @@ MonoBehaviour:
   flightRadius: 4
   maxTargetSelectionRetries: 8
   minTargetDistance: 1
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  pathCheckRadius: 0.35
+  landingCheckRadius: 0.45
   hoverAmplitude: 0.08
   hoverFrequency: 3
   propellerAccelerationSpeed: 1080
