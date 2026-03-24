@@ -373,11 +373,8 @@ public sealed class VertoBallBehaviour : MonoBehaviour
 
     private void AnimateBody(Vector3 previousPosition)
     {
-        planarVelocity = (transform.position - previousPosition) / Mathf.Max(Time.deltaTime, 0.0001f);
-        planarVelocity.y = 0f;
-
         AnimateHover();
-        AnimateTilt();
+        visualBodyTransform.localRotation = bodyBaseLocalRotation;
     }
 
     private void AnimateHover()
@@ -387,28 +384,6 @@ public sealed class VertoBallBehaviour : MonoBehaviour
             : 0f;
 
         visualBodyTransform.localPosition = baseLocalPosition + Vector3.up * hoverOffset;
-    }
-
-    private void AnimateTilt()
-    {
-        var localVelocity = transform.InverseTransformDirection(planarVelocity);
-        var normalizedVelocity = Vector3.ClampMagnitude(localVelocity / Mathf.Max(movementSpeed, 0.01f), 1f);
-        var targetTiltX = normalizedVelocity.z * maxTiltAngle;
-        var targetTiltZ = -normalizedVelocity.x * maxTiltAngle;
-
-        currentTiltAngleX = Mathf.Lerp(currentTiltAngleX, targetTiltX, tiltSmoothingSpeed * Time.deltaTime);
-        currentTiltAngleZ = Mathf.Lerp(currentTiltAngleZ, targetTiltZ, tiltSmoothingSpeed * Time.deltaTime);
-
-        var pivotOffset = Vector3.up * baseLocalPosition.y;
-        var targetTilt = Quaternion.Euler(currentTiltAngleX, 0f, currentTiltAngleZ);
-        var tiltedBodyOffset = targetTilt * -pivotOffset;
-
-        visualBodyTransform.localRotation = Quaternion.Slerp(
-            visualBodyTransform.localRotation,
-            bodyBaseLocalRotation * targetTilt,
-            tiltSmoothingSpeed * Time.deltaTime);
-
-        visualBodyTransform.localPosition += pivotOffset + tiltedBodyOffset;
     }
 
     private void CacheReferences()
