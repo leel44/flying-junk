@@ -93,6 +93,16 @@ public sealed class VertoBallBehaviour : MonoBehaviour
         Initialize(configuredMinIdleTime, configuredMaxIdleTime, configuredFlightRadius, true);
     }
 
+    public void OnHoleNearby()
+    {
+        if (!hasCompletedInitialization || currentState != VertoBallState.Idle)
+        {
+            return;
+        }
+
+        BeginTakeoff();
+    }
+
     private void Awake()
     {
         CacheReferences();

@@ -14,6 +14,7 @@ public sealed class MvpBootstrap : MonoBehaviour
             holeController = CreateHole();
         }
 
+        EnsureHoleScareTrigger(holeController.transform);
         SetupCamera(holeController != null ? holeController.transform : null);
 
         if (FindAnyObjectByType<SwallowableObject>() == null)
@@ -81,6 +82,42 @@ public sealed class MvpBootstrap : MonoBehaviour
         renderer.material.color = new Color(1f, 0.85f, 0.35f);
 
         swallowableObject.AddComponent<SwallowableObject>();
+    }
+
+    private static void EnsureHoleScareTrigger(Transform holeTransform)
+    {
+        if (holeTransform == null)
+        {
+            return;
+        }
+
+        var scareTriggerTransform = holeTransform.Find("HoleScareTrigger");
+        if (scareTriggerTransform == null)
+        {
+            var scareTriggerObject = new GameObject("HoleScareTrigger");
+            scareTriggerTransform = scareTriggerObject.transform;
+            scareTriggerTransform.SetParent(holeTransform, false);
+            scareTriggerTransform.localPosition = Vector3.zero;
+            scareTriggerTransform.localRotation = Quaternion.identity;
+            scareTriggerTransform.localScale = Vector3.one;
+        }
+
+        var rigidbody = scareTriggerTransform.GetComponent<Rigidbody>();
+        if (rigidbody == null)
+        {
+            rigidbody = scareTriggerTransform.gameObject.AddComponent<Rigidbody>();
+        }
+
+        rigidbody.isKinematic = true;
+        rigidbody.useGravity = false;
+
+        var scareTrigger = scareTriggerTransform.GetComponent<HoleScareTrigger>();
+        if (scareTrigger == null)
+        {
+            scareTrigger = scareTriggerTransform.gameObject.AddComponent<HoleScareTrigger>();
+        }
+
+        scareTrigger.EnsureTriggerSetup();
     }
 }
 
