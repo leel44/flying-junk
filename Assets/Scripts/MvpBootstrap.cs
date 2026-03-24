@@ -9,12 +9,13 @@ public sealed class MvpBootstrap : MonoBehaviour
 
     private void Awake()
     {
-        SetupCamera();
-
-        if (FindAnyObjectByType<HoleController>() == null)
+        var holeController = FindAnyObjectByType<HoleController>();
+        if (holeController == null)
         {
-            CreateHole();
+            holeController = CreateHole();
         }
+
+        SetupCamera(holeController != null ? holeController.transform : null);
 
         if (GameObject.Find(FloorName) == null)
         {
@@ -27,7 +28,7 @@ public sealed class MvpBootstrap : MonoBehaviour
         }
     }
 
-    private void SetupCamera()
+    private void SetupCamera(Transform holeTransform)
     {
         var sceneCamera = GetComponent<Camera>();
         if (sceneCamera == null)
@@ -40,6 +41,17 @@ public sealed class MvpBootstrap : MonoBehaviour
         sceneCamera.backgroundColor = new Color(0.73f, 0.9f, 0.76f);
         transform.position = new Vector3(0f, 5f, -3f);
         transform.rotation = Quaternion.Euler(60f, 0f, 0f);
+
+        var cameraFollow = GetComponent<HoleCameraFollow>();
+        if (cameraFollow == null)
+        {
+            cameraFollow = gameObject.AddComponent<HoleCameraFollow>();
+        }
+
+        if (holeTransform != null)
+        {
+            cameraFollow.Configure(holeTransform, transform.position - holeTransform.position);
+        }
     }
 
     private static void CreateFloor()
@@ -54,7 +66,7 @@ public sealed class MvpBootstrap : MonoBehaviour
         renderer.material.color = new Color(0.47f, 0.73f, 0.42f);
     }
 
-    private static void CreateHole()
+    private static HoleController CreateHole()
     {
         var hole = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         hole.name = HoleName;
@@ -72,7 +84,7 @@ public sealed class MvpBootstrap : MonoBehaviour
         rigidbody.isKinematic = true;
         rigidbody.useGravity = false;
 
-        hole.AddComponent<HoleController>();
+        return hole.AddComponent<HoleController>();
     }
 
     private static void CreateSwallowableObject()
@@ -228,6 +240,33 @@ public sealed class HoleController : MonoBehaviour
         position.y = holeY;
 
         transform.position = position;
+    }
+}
+
+public sealed class HoleCameraFollow : MonoBehaviour
+{
+    [SerializeField] private Transform target;
+    [SerializeField] private Vector3 followOffset;
+    [SerializeField] private float followSmoothness = 8f;
+
+    public void Configure(Transform targetTransform, Vector3 offset)
+    {
+        target = targetTransform;
+        followOffset = offset;
+    }
+
+    private void LateUpdate()
+    {
+        if (target == null)
+        {
+            return;
+        }
+
+        var targetPosition = target.position + followOffset;
+        transform.position = Vector3.Lerp(
+            transform.position,
+            targetPosition,
+            followSmoothness * Time.deltaTime);
     }
 }
 
