@@ -206,12 +206,13 @@ public sealed class HoleController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.GetComponent<SwallowableObject>() == null)
+        var swallowableObject = other.GetComponentInParent<SwallowableObject>();
+        if (swallowableObject == null)
         {
             return;
         }
 
-        Destroy(other.gameObject);
+        Destroy(swallowableObject.gameObject);
     }
 
     private void ClampInsideFloor()
@@ -252,6 +253,3 @@ public sealed class HoleCameraFollow : MonoBehaviour
     }
 }
 
-public sealed class SwallowableObject : MonoBehaviour
-{
-}
