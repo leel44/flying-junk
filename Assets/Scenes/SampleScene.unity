@@ -436,6 +436,63 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8687499702823013207
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3928478853900642329}
+  - component: {fileID: 7328142551380777937}
+  m_Layer: 0
+  m_Name: VertoBallSpawnManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3928478853900642329
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8687499702823013207}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7328142551380777937
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8687499702823013207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 596026f4a2cb463287886b59936bb6c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  vertoBallPrefab: {fileID: 7575917887559298747, guid: d54abf93933c67948a4367e9f554870a, type: 3}
+  keepManualTestInstance: 1
+  spawnCount: 3
+  spawnRadius: 6
+  minSpawnSeparation: 1.75
+  maxSpawnPositionRetries: 12
+  spawnObstacleLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  spawnCheckRadius: 0.6
+  minIdleTime: 1.5
+  maxIdleTime: 3
+  flightRadius: 4
 --- !u!1001 &8704204412718101372
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -501,4 +558,5 @@ SceneRoots:
   - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 832575519}
+  - {fileID: 3928478853900642329}
   - {fileID: 5621268492352914631}
