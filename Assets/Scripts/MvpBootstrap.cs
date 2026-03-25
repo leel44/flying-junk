@@ -256,6 +256,13 @@ public sealed class HoleController : MonoBehaviour
             return;
         }
 
+        var coinCollectible = swallowableObject.GetComponent<CoinCollectible>();
+        if (coinCollectible != null)
+        {
+            coinCollectible.Collect();
+            return;
+        }
+
         Destroy(swallowableObject.gameObject);
     }
 
