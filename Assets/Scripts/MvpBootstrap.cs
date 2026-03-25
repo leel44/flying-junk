@@ -263,6 +263,13 @@ public sealed class HoleController : MonoBehaviour
             return;
         }
 
+        var vertoBallCollectible = swallowableObject.GetComponent<VertoBallCollectible>();
+        if (vertoBallCollectible != null)
+        {
+            vertoBallCollectible.Collect();
+            return;
+        }
+
         Destroy(swallowableObject.gameObject);
     }
 
