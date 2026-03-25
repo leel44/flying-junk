@@ -127,11 +127,8 @@ public sealed class HoleController : MonoBehaviour
 
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float clampPadding = 0.75f;
-    [SerializeField] private float targetStopDistance = 0.05f;
 
-    private readonly Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
-    private Vector3 targetPosition;
-    private bool hasPointerTarget;
+    private BonusLevelJoystick joystick;
     private float holeY;
     private bool hasWarnedAboutMissingFloor;
     private Transform floorTransform;
@@ -141,15 +138,15 @@ public sealed class HoleController : MonoBehaviour
     private void Awake()
     {
         holeY = transform.position.y;
-        targetPosition = transform.position;
+        joystick = FindAnyObjectByType<BonusLevelJoystick>();
         CacheFloorReferences();
     }
 
     private void Update()
     {
-        if (TryUpdatePointerTarget())
+        if (joystick != null && joystick.Movement.sqrMagnitude > 0f)
         {
-            MoveTowardsPointerTarget();
+            MoveWithInput(joystick.Movement);
         }
         else
         {
@@ -157,63 +154,6 @@ public sealed class HoleController : MonoBehaviour
         }
 
         ClampInsideFloor();
-    }
-
-    private bool TryUpdatePointerTarget()
-    {
-        if (!TryGetPointerScreenPosition(out var screenPosition))
-        {
-            hasPointerTarget = false;
-            return false;
-        }
-
-        if (!TryGetWorldPointOnGround(screenPosition, out var worldPoint))
-        {
-            return false;
-        }
-
-        targetPosition = new Vector3(worldPoint.x, holeY, worldPoint.z);
-        hasPointerTarget = true;
-        return true;
-    }
-
-    private bool TryGetPointerScreenPosition(out Vector2 screenPosition)
-    {
-        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
-        {
-            screenPosition = Touchscreen.current.primaryTouch.position.ReadValue();
-            return true;
-        }
-
-        if (Mouse.current != null && Mouse.current.leftButton.isPressed)
-        {
-            screenPosition = Mouse.current.position.ReadValue();
-            return true;
-        }
-
-        screenPosition = Vector2.zero;
-        return false;
-    }
-
-    private void MoveTowardsPointerTarget()
-    {
-        if (!hasPointerTarget)
-        {
-            return;
-        }
-
-        var currentPosition = transform.position;
-        var currentFlatPosition = new Vector3(currentPosition.x, holeY, currentPosition.z);
-        var targetFlatPosition = new Vector3(targetPosition.x, holeY, targetPosition.z);
-
-        if (Vector3.Distance(currentFlatPosition, targetFlatPosition) <= targetStopDistance)
-        {
-            transform.position = targetFlatPosition;
-            return;
-        }
-
-        var nextPosition = Vector3.MoveTowards(currentFlatPosition, targetFlatPosition, moveSpeed * Time.deltaTime);
-        transform.position = nextPosition;
     }
 
     private void MoveWithKeyboardFallback()
@@ -224,28 +164,13 @@ public sealed class HoleController : MonoBehaviour
             input.Normalize();
         }
 
-        var delta = new Vector3(input.x, 0f, input.y) * (moveSpeed * Time.deltaTime);
-        transform.position += delta;
+        MoveWithInput(input);
     }
 
-    private bool TryGetWorldPointOnGround(Vector2 screenPosition, out Vector3 worldPoint)
+    private void MoveWithInput(Vector2 input)
     {
-        var sceneCamera = Camera.main;
-        if (sceneCamera == null)
-        {
-            worldPoint = Vector3.zero;
-            return false;
-        }
-
-        var ray = sceneCamera.ScreenPointToRay(screenPosition);
-        if (!groundPlane.Raycast(ray, out var enter))
-        {
-            worldPoint = Vector3.zero;
-            return false;
-        }
-
-        worldPoint = ray.GetPoint(enter);
-        return true;
+        var delta = new Vector3(input.x, 0f, input.y) * (moveSpeed * Time.deltaTime);
+        transform.position += delta;
     }
 
     private void OnTriggerEnter(Collider other)
