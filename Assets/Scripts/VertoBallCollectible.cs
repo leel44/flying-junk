@@ -3,11 +3,13 @@ using UnityEngine;
 public sealed class VertoBallCollectible : MonoBehaviour
 {
     private BonusLevelManager bonusLevelManager;
+    private BonusLevelCollectFeedback collectFeedback;
     private bool isCollected;
 
     private void Awake()
     {
         bonusLevelManager = FindAnyObjectByType<BonusLevelManager>();
+        collectFeedback = FindAnyObjectByType<BonusLevelCollectFeedback>();
     }
 
     public void Collect()
@@ -26,6 +28,16 @@ public sealed class VertoBallCollectible : MonoBehaviour
 
         if (bonusLevelManager != null)
         {
+            if (collectFeedback == null)
+            {
+                collectFeedback = FindAnyObjectByType<BonusLevelCollectFeedback>();
+            }
+
+            if (collectFeedback != null)
+            {
+                collectFeedback.PlayVertoBallFeedback(transform.position);
+            }
+
             bonusLevelManager.AddVertoBall();
         }
         else
