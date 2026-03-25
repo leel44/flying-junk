@@ -144,6 +144,11 @@ public sealed class HoleController : MonoBehaviour
 
     private void Update()
     {
+        if (joystick == null || !joystick.isActiveAndEnabled)
+        {
+            joystick = FindAnyObjectByType<BonusLevelJoystick>();
+        }
+
         if (joystick != null && joystick.Movement.sqrMagnitude > 0f)
         {
             MoveWithInput(joystick.Movement);

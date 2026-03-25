@@ -7,9 +7,8 @@ public sealed class BonusLevelJoystick : MonoBehaviour
     [SerializeField] private RectTransform handleTransform;
     [SerializeField] private float radiusScale = 0.4f;
 
-    private Canvas canvas;
-    private Camera uiCamera;
     private Vector2 movement;
+    private Vector2 dragStartScreenPosition;
     private float movementRadius;
     private bool isDragging;
 
@@ -26,11 +25,6 @@ public sealed class BonusLevelJoystick : MonoBehaviour
         {
             handleTransform = transform.Find("Handle") as RectTransform;
         }
-
-        canvas = GetComponentInParent<Canvas>();
-        uiCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
-            ? canvas.worldCamera
-            : null;
 
         RecalculateRadius();
         ResetHandle();
@@ -57,23 +51,13 @@ public sealed class BonusLevelJoystick : MonoBehaviour
             return;
         }
 
-        if (!ScreenPointToLocalPoint(screenPosition, out var localPoint))
+        if (pointerPressedThisFrame || !isDragging)
         {
-            ResetHandle();
-            return;
-        }
-
-        if (!isDragging)
-        {
-            if (!pointerPressedThisFrame || !IsInsideBase(localPoint))
-            {
-                return;
-            }
-
+            dragStartScreenPosition = screenPosition;
             isDragging = true;
         }
 
-        UpdateHandle(localPoint);
+        UpdateHandle(screenPosition - dragStartScreenPosition);
     }
 
     private void RecalculateRadius()
@@ -87,14 +71,9 @@ public sealed class BonusLevelJoystick : MonoBehaviour
         movementRadius = Mathf.Min(baseTransform.rect.width, baseTransform.rect.height) * 0.5f * radiusScale;
     }
 
-    private bool IsInsideBase(Vector2 localPoint)
+    private void UpdateHandle(Vector2 screenDelta)
     {
-        return localPoint.sqrMagnitude <= movementRadius * movementRadius;
-    }
-
-    private void UpdateHandle(Vector2 localPoint)
-    {
-        var clampedOffset = Vector2.ClampMagnitude(localPoint, movementRadius);
+        var clampedOffset = Vector2.ClampMagnitude(screenDelta, movementRadius);
         movement = movementRadius > 0f ? clampedOffset / movementRadius : Vector2.zero;
 
         if (handleTransform != null)
@@ -112,21 +91,6 @@ public sealed class BonusLevelJoystick : MonoBehaviour
         {
             handleTransform.anchoredPosition = Vector2.zero;
         }
-    }
-
-    private bool ScreenPointToLocalPoint(Vector2 screenPosition, out Vector2 localPoint)
-    {
-        if (baseTransform == null)
-        {
-            localPoint = Vector2.zero;
-            return false;
-        }
-
-        return RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            baseTransform,
-            screenPosition,
-            uiCamera,
-            out localPoint);
     }
 
     private static bool TryGetPointerState(out bool isPressed, out bool wasPressedThisFrame, out Vector2 screenPosition)
