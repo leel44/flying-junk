@@ -650,6 +650,7 @@ GameObject:
   - component: {fileID: 960100103}
   - component: {fileID: 960100104}
   - component: {fileID: 960100105}
+  - component: {fileID: 960100106}
   m_Layer: 5
   m_Name: BonusLevelCanvas
   m_TagString: Untagged
@@ -769,6 +770,27 @@ MonoBehaviour:
   warningTimerColor: {r: 0.92, g: 0.22, b: 0.22, a: 1}
   warningPulseAmplitude: 0.08
   warningPulseFrequency: 5
+--- !u!114 &960100106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 960100100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e7d04c2255d4f7b8ad8c6a36a12035d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  coinTarget: {fileID: 960110181}
+  vertoBallTarget: {fileID: 960110281}
+  coinIconSource: {fileID: 960110163}
+  vertoBallIconSource: {fileID: 960110263}
+  canvasRoot: {fileID: 960100101}
+  durationSeconds: 0.5
+  iconSize: {x: 64, y: 64}
+  startScale: 1
+  endScale: 0.82
 --- !u!1 &960100110
 GameObject:
   m_ObjectHideFlags: 0
