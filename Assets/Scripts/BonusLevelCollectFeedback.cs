@@ -4,12 +4,6 @@ using UnityEngine.UI;
 
 public sealed class BonusLevelCollectFeedback : MonoBehaviour
 {
-    [System.Diagnostics.Conditional("UNITY_EDITOR")]
-    private static void LogDebug(string message)
-    {
-        Debug.Log(message);
-    }
-
     private sealed class ActiveFlight
     {
         public RectTransform RectTransform;
@@ -41,7 +35,6 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
     [SerializeField] private Vector2 iconSize = new Vector2(64f, 64f);
     [SerializeField] private float bounceDuration = 0.2f;
     [SerializeField] private float bounceScaleAmount = 0.12f;
-    [SerializeField] private bool enableDebugLogs;
 
     private readonly List<ActiveFlight> activeFlights = new List<ActiveFlight>();
     private readonly List<ActiveBounce> activeBounces = new List<ActiveBounce>();
@@ -128,11 +121,6 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
             return;
         }
 
-        if (enableDebugLogs)
-        {
-            LogDebug($"BonusLevelCollectFeedback.PlayFeedback called. World: {worldPosition}, start: {startPosition}, target: {endPosition}");
-        }
-
         var iconObject = new GameObject("FlyingCollectIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
         var iconTransform = iconObject.GetComponent<RectTransform>();
         iconTransform.SetParent(canvasRectTransform, false);
@@ -140,19 +128,13 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
         iconTransform.anchorMax = new Vector2(0.5f, 0.5f);
         iconTransform.pivot = new Vector2(0.5f, 0.5f);
         iconTransform.sizeDelta = iconSize;
-        iconTransform.localPosition = new Vector3(startPosition.x, startPosition.y, 0f);
+        iconTransform.anchoredPosition = startPosition;
         iconTransform.localScale = Vector3.one;
-        iconTransform.SetAsLastSibling();
 
         var iconImage = iconObject.GetComponent<Image>();
         iconImage.sprite = sourceIcon.sprite;
         iconImage.preserveAspect = true;
         iconImage.raycastTarget = false;
-
-        if (enableDebugLogs)
-        {
-            LogDebug($"BonusLevelCollectFeedback created icon '{iconObject.name}' with size {iconTransform.sizeDelta} and sprite '{iconImage.sprite.name}'.");
-        }
 
         activeFlights.Add(new ActiveFlight
         {
@@ -183,7 +165,7 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
             var position = Vector2.LerpUnclamped(flight.StartPosition, flight.EndPosition, easedTime);
             position.y += Mathf.Sin(normalizedTime * Mathf.PI) * flightArcHeight;
 
-            flight.RectTransform.localPosition = new Vector3(position.x, position.y, 0f);
+            flight.RectTransform.anchoredPosition = position;
 
             if (normalizedTime < 1f)
             {
@@ -262,17 +244,6 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
         }
 
         var screenPosition = worldCamera.WorldToScreenPoint(worldPosition);
-        if (enableDebugLogs)
-        {
-            LogDebug($"BonusLevelCollectFeedback world->screen: {worldPosition} -> {screenPosition}");
-        }
-
-        if (screenPosition.z < 0f)
-        {
-            canvasPosition = default;
-            return false;
-        }
-
         return RectTransformUtility.ScreenPointToLocalPointInRectangle(
             canvasRectTransform,
             screenPosition,
