@@ -2076,6 +2076,8 @@ MonoBehaviour:
   vertoBallCountText: {fileID: 960110273}
   coinResultText: {fileID: 960120163}
   vertoBallResultText: {fileID: 960120213}
+  coinFx: {fileID: 1672426281}
+  vertoBallFx: {fileID: 950665405}
   levelDurationSeconds: 120
   warningThresholdSeconds: 12
   normalTimerColor: {r: 1, g: 1, b: 1, a: 1}
