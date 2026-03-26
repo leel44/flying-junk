@@ -2102,9 +2102,9 @@ MonoBehaviour:
   vertoBallIconSource: {fileID: 960110263}
   canvasRoot: {fileID: 960100101}
   durationSeconds: 0.5
-  iconSize: {x: 64, y: 64}
-  startScale: 1
-  endScale: 0.82
+  iconSize: {x: 144, y: 144}
+  startScale: 2
+  endScale: 1
 --- !u!1 &960100110
 GameObject:
   m_ObjectHideFlags: 0
@@ -2120,7 +2120,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &960100111
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2512,7 +2512,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &960110111
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2733,7 +2733,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 220, y: -128}
+  m_AnchoredPosition: {x: 228, y: -128}
   m_SizeDelta: {x: 278, y: 94}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &960110152
@@ -2809,7 +2809,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 128, y: 128}
+  m_SizeDelta: {x: 144, y: 144}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &960110162
 CanvasRenderer:
