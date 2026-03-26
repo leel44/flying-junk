@@ -39,8 +39,9 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
     [SerializeField] private Vector2 iconSize = new Vector2(64f, 64f);
     [SerializeField] private float startScale = 1f;
     [SerializeField] private float endScale = 0.82f;
-    [SerializeField] private float bounceDuration = 0.2f;
-    [SerializeField] private float bounceScaleAmount = 0.12f;
+    [SerializeField] private float bounceDuration = 0.26f;
+    [SerializeField] private float bouncePeakScale = 1.18f;
+    [SerializeField] private float bounceDipScale = 0.94f;
 
     private readonly List<ActiveFeedback> activeFeedbacks = new List<ActiveFeedback>();
     private readonly List<ActiveBounce> activeBounces = new List<ActiveBounce>();
@@ -215,7 +216,7 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
 
             bounce.ElapsedTime += deltaTime;
             var normalizedTime = Mathf.Clamp01(bounce.ElapsedTime / Mathf.Max(0.01f, bounceDuration));
-            var scaleMultiplier = 1f + Mathf.Sin(normalizedTime * Mathf.PI) * bounceScaleAmount;
+            var scaleMultiplier = EvaluateBounceScale(normalizedTime);
             bounce.Target.localScale = bounce.BaseScale * scaleMultiplier;
 
             if (normalizedTime < 1f)
@@ -226,6 +227,21 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
             bounce.Target.localScale = bounce.BaseScale;
             activeBounces.RemoveAt(i);
         }
+    }
+
+    private float EvaluateBounceScale(float normalizedTime)
+    {
+        if (normalizedTime <= 0.4f)
+        {
+            return Mathf.Lerp(1f, bouncePeakScale, normalizedTime / 0.4f);
+        }
+
+        if (normalizedTime <= 0.75f)
+        {
+            return Mathf.Lerp(bouncePeakScale, bounceDipScale, (normalizedTime - 0.4f) / 0.35f);
+        }
+
+        return Mathf.Lerp(bounceDipScale, 1f, (normalizedTime - 0.75f) / 0.25f);
     }
 
     private bool HasRequiredReferences(RectTransform target, Image iconSource, string feedbackName)
