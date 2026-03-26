@@ -47,13 +47,21 @@ public sealed class BonusLevelManager : MonoBehaviour
     {
         coinCount += Mathf.Max(0, amount);
         RefreshCountTexts();
-        PlayFx(coinFx, coinFxSystems);
     }
 
     public void AddVertoBall(int amount = 1)
     {
         vertoBallCount += Mathf.Max(0, amount);
         RefreshCountTexts();
+    }
+
+    public void PlayCoinCounterFx()
+    {
+        PlayFx(coinFx, coinFxSystems);
+    }
+
+    public void PlayVertoBallCounterFx()
+    {
         PlayFx(vertoBallFx, vertoBallFxSystems);
     }
 
