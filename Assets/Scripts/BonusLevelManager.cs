@@ -24,6 +24,8 @@ public sealed class BonusLevelManager : MonoBehaviour
     [SerializeField] private Text vertoBallCountText;
     [SerializeField] private Text coinResultText;
     [SerializeField] private Text vertoBallResultText;
+    [SerializeField] private RectTransform coinFx;
+    [SerializeField] private RectTransform vertoBallFx;
 
     [Header("Timing")]
     [SerializeField] private float levelDurationSeconds = 120f;
@@ -38,17 +40,21 @@ public sealed class BonusLevelManager : MonoBehaviour
     private int coinCount;
     private int vertoBallCount;
     private Vector3 timerTextBaseScale = Vector3.one;
+    private ParticleSystem[] coinFxSystems;
+    private ParticleSystem[] vertoBallFxSystems;
 
     public void AddCoin(int amount = 1)
     {
         coinCount += Mathf.Max(0, amount);
         RefreshCountTexts();
+        PlayFx(coinFx, coinFxSystems);
     }
 
     public void AddVertoBall(int amount = 1)
     {
         vertoBallCount += Mathf.Max(0, amount);
         RefreshCountTexts();
+        PlayFx(vertoBallFx, vertoBallFxSystems);
     }
 
     private void Awake()
@@ -57,6 +63,9 @@ public sealed class BonusLevelManager : MonoBehaviour
         {
             timerTextBaseScale = timerText.rectTransform.localScale;
         }
+
+        coinFxSystems = GetFxSystems(coinFx);
+        vertoBallFxSystems = GetFxSystems(vertoBallFx);
 
         Time.timeScale = 1f;
         ApplyWaitingToStartState();
@@ -187,6 +196,33 @@ public sealed class BonusLevelManager : MonoBehaviour
 
         timerText.color = normalTimerColor;
         timerText.rectTransform.localScale = timerTextBaseScale;
+    }
+
+    private static ParticleSystem[] GetFxSystems(RectTransform fxRoot)
+    {
+        return fxRoot != null ? fxRoot.GetComponentsInChildren<ParticleSystem>(true) : null;
+    }
+
+    private static void PlayFx(RectTransform fxRoot, ParticleSystem[] systems)
+    {
+        if (fxRoot == null || systems == null || systems.Length == 0)
+        {
+            return;
+        }
+
+        fxRoot.gameObject.SetActive(true);
+
+        for (var i = 0; i < systems.Length; i++)
+        {
+            var particleSystem = systems[i];
+            if (particleSystem == null)
+            {
+                continue;
+            }
+
+            particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particleSystem.Play(true);
+        }
     }
 
     private void SetScreenState(bool showStartScreen, bool showHud, bool showEndScreen)
