@@ -54,12 +54,12 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
 
     public void PlayCoinFeedback(Vector3 worldPosition)
     {
-        PlayFeedback(worldPosition, coinTarget, coinIconSource, "coin", FeedbackType.Coin);
+        PlayFeedback(worldPosition, coinTarget, coinIconSource, coinIconSource.rectTransform, "coin", FeedbackType.Coin);
     }
 
     public void PlayVertoBallFeedback(Vector3 worldPosition)
     {
-        PlayFeedback(worldPosition, vertoBallTarget, vertoBallIconSource, "vertoball", FeedbackType.VertoBall);
+        PlayFeedback(worldPosition, vertoBallTarget, vertoBallIconSource, vertoBallIconSource.rectTransform, "vertoball", FeedbackType.VertoBall);
     }
 
     private void Update()
@@ -104,6 +104,7 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
         Vector3 worldPosition,
         RectTransform target,
         Image iconSource,
+        RectTransform bounceTarget,
         string feedbackName,
         FeedbackType feedbackType)
     {
@@ -143,7 +144,7 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
         activeFeedbacks.Add(new ActiveFeedback
         {
             RectTransform = iconTransform,
-            BounceTarget = target.parent as RectTransform,
+            BounceTarget = bounceTarget,
             StartLocalPosition = startLocalPoint,
             TargetLocalPosition = targetLocalPoint,
             ElapsedTime = 0f,
