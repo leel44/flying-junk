@@ -189,10 +189,10 @@ public sealed class BonusLevelManager : MonoBehaviour
 
     private void RefreshCountTexts()
     {
-        SetText(coinCountText, $"x {coinCount:00}");
-        SetText(vertoBallCountText, $"x {vertoBallCount:00}");
-        SetText(coinResultText, $"x {coinCount:00}");
-        SetText(vertoBallResultText, $"x {vertoBallCount:00}");
+        SetText(coinCountText, $"{coinCount}");
+        SetText(vertoBallCountText, $"{vertoBallCount}");
+        SetText(coinResultText, $"{coinCount}");
+        SetText(vertoBallResultText, $"{vertoBallCount}");
     }
 
     private void ResetTimerWarningVisuals()
