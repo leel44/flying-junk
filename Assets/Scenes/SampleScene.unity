@@ -6235,7 +6235,7 @@ MonoBehaviour:
   gameplayMusicVolume: 1
   finalFanfareSfx: {fileID: 0}
   finalFanfareVolume: 1
-  playButtonClickSfx: {fileID: 0}
+  playButtonClickSfx: {fileID: 8300000, guid: 342e17225240d5d40bfe6aa1d305099d, type: 3}
   playButtonClickVolume: 1
   coinCollectSfx: {fileID: 0}
   coinCollectVolume: 1
