@@ -4,12 +4,16 @@ public sealed class CoinCollectible : MonoBehaviour
 {
     private BonusLevelManager bonusLevelManager;
     private BonusLevelCollectFeedback collectFeedback;
+    private BonusLevelAudioManager audioManager;
     private bool isCollected;
 
     private void Awake()
     {
         bonusLevelManager = FindAnyObjectByType<BonusLevelManager>();
         collectFeedback = FindAnyObjectByType<BonusLevelCollectFeedback>();
+        audioManager = BonusLevelAudioManager.Instance != null
+            ? BonusLevelAudioManager.Instance
+            : FindAnyObjectByType<BonusLevelAudioManager>();
     }
 
     public void Collect()
@@ -20,6 +24,15 @@ public sealed class CoinCollectible : MonoBehaviour
         }
 
         isCollected = true;
+
+        if (audioManager == null)
+        {
+            audioManager = BonusLevelAudioManager.Instance != null
+                ? BonusLevelAudioManager.Instance
+                : FindAnyObjectByType<BonusLevelAudioManager>();
+        }
+
+        audioManager?.PlayCoinPickup();
 
         if (bonusLevelManager == null)
         {
