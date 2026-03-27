@@ -6253,10 +6253,14 @@ MonoBehaviour:
   finalFanfareVolume: 1
   playButtonClickSfx: {fileID: 8300000, guid: d3c4bedd19e4bd44b9149901cb07577a, type: 3}
   playButtonClickVolume: 1
-  coinCollectSfx: {fileID: 8300000, guid: 9809b38d08a94e743833b222cc483c5a, type: 3}
-  coinCollectVolume: 1
-  vertoBallCollectSfx: {fileID: 8300000, guid: 440463569cfb924459b5860e727fdaa6, type: 3}
-  vertoBallCollectVolume: 1
+  coinPickupSfx: {fileID: 8300000, guid: 9809b38d08a94e743833b222cc483c5a, type: 3}
+  coinPickupVolume: 1
+  vertoBallPickupSfx: {fileID: 8300000, guid: 440463569cfb924459b5860e727fdaa6, type: 3}
+  vertoBallPickupVolume: 1
+  coinUiConfirmSfx: {fileID: 8300000, guid: 6a52ee9620655a74f9cf91c62df98c3b, type: 3}
+  coinUiConfirmVolume: 0.45
+  vertoBallUiConfirmSfx: {fileID: 8300000, guid: 7ca94ec18460b5847941491487660acf, type: 3}
+  vertoBallUiConfirmVolume: 0.45
   vertoBallBuzzLoop: {fileID: 0}
   vertoBallBuzzVolume: 1
   vertoBallRustleLoop: {fileID: 0}
