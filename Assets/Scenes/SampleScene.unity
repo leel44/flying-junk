@@ -3030,7 +3030,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b4f6e6a7c734631b7c4a4c1d6f9e2ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  holeTrailPrefab: {fileID: 840068294263815403, guid: 938fef321973ea847b8cb979925098ec, type: 3}
+  holeTrailPrefab: {fileID: 0}
 --- !u!1001 &331689877
 PrefabInstance:
   m_ObjectHideFlags: 0
