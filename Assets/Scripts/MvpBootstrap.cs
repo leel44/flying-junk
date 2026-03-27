@@ -36,7 +36,6 @@ public sealed class MvpBootstrap : MonoBehaviour
         sceneCamera.orthographic = false;
         sceneCamera.fieldOfView = 60f;
         sceneCamera.backgroundColor = new Color(0.73f, 0.9f, 0.76f);
-        transform.position = new Vector3(0f, 5f, -3f);
         transform.rotation = Quaternion.Euler(60f, 0f, 0f);
 
         var cameraFollow = GetComponent<HoleCameraFollow>();
@@ -47,7 +46,7 @@ public sealed class MvpBootstrap : MonoBehaviour
 
         if (holeTransform != null)
         {
-            cameraFollow.Configure(holeTransform, transform.position - holeTransform.position);
+            cameraFollow.Configure(holeTransform);
         }
     }
 
@@ -150,13 +149,16 @@ public sealed class MvpBootstrap : MonoBehaviour
 public sealed class HoleCameraFollow : MonoBehaviour
 {
     [SerializeField] private Transform target;
-    [SerializeField] private Vector3 followOffset;
+    [SerializeField] private Vector3 followOffset = new(0f, 4.95f, -2f);
     [SerializeField] private float followSmoothness = 8f;
 
-    public void Configure(Transform targetTransform, Vector3 offset)
+    public void Configure(Transform targetTransform)
     {
         target = targetTransform;
-        followOffset = offset;
+        if (target != null)
+        {
+            transform.position = target.position + followOffset;
+        }
     }
 
     private void LateUpdate()
