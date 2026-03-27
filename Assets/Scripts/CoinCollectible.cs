@@ -2,9 +2,14 @@ using UnityEngine;
 
 public sealed class CoinCollectible : MonoBehaviour
 {
+    private const string HoleCoinEatingFxChildName = "FxCoinEating";
+
     private BonusLevelManager bonusLevelManager;
     private BonusLevelCollectFeedback collectFeedback;
     private BonusLevelAudioManager audioManager;
+    private HoleController holeController;
+    private GameObject holeCoinEatingFxObject;
+    private ParticleSystem[] holeCoinEatingParticleSystems;
     private bool isCollected;
 
     private void Awake()
@@ -14,6 +19,7 @@ public sealed class CoinCollectible : MonoBehaviour
         audioManager = BonusLevelAudioManager.Instance != null
             ? BonusLevelAudioManager.Instance
             : FindAnyObjectByType<BonusLevelAudioManager>();
+        CacheHoleCoinEatingFx();
     }
 
     public void Collect()
@@ -24,6 +30,8 @@ public sealed class CoinCollectible : MonoBehaviour
         }
 
         isCollected = true;
+
+        PlayHoleCoinEatingFx();
 
         if (audioManager == null)
         {
@@ -59,5 +67,55 @@ public sealed class CoinCollectible : MonoBehaviour
         }
 
         Destroy(gameObject);
+    }
+
+    private void CacheHoleCoinEatingFx()
+    {
+        if (holeCoinEatingFxObject != null && holeCoinEatingParticleSystems != null && holeCoinEatingParticleSystems.Length > 0)
+        {
+            return;
+        }
+
+        if (holeController == null)
+        {
+            holeController = FindAnyObjectByType<HoleController>();
+        }
+
+        if (holeController == null)
+        {
+            return;
+        }
+
+        var fxTransform = holeController.transform.Find(HoleCoinEatingFxChildName);
+        if (fxTransform == null)
+        {
+            return;
+        }
+
+        holeCoinEatingFxObject = fxTransform.gameObject;
+        holeCoinEatingParticleSystems = fxTransform.GetComponentsInChildren<ParticleSystem>(true);
+    }
+
+    private void PlayHoleCoinEatingFx()
+    {
+        CacheHoleCoinEatingFx();
+        if (holeCoinEatingFxObject == null)
+        {
+            Debug.LogWarning("CoinCollectible could not find Hole/FxCoinEating for collect feedback.", this);
+            return;
+        }
+
+        holeCoinEatingFxObject.SetActive(true);
+        for (var i = 0; i < holeCoinEatingParticleSystems.Length; i++)
+        {
+            var particleSystem = holeCoinEatingParticleSystems[i];
+            if (particleSystem == null)
+            {
+                continue;
+            }
+
+            particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particleSystem.Play(true);
+        }
     }
 }
