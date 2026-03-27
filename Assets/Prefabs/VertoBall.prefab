@@ -73,6 +73,7 @@ MonoBehaviour:
   maxTiltAngle: 12
   tiltSmoothingSpeed: 10
   drawCurrentTargetGizmo: 1
+  drawFloorBoundsGizmo: 1
 --- !u!114 &3193818053645423381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -198,9 +199,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.4
-  m_Height: 1.4475551
+  m_Height: 1
   m_Direction: 1
-  m_Center: {x: 0, y: 0.7153121, z: 0.000000029802322}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!4 &3370227951624971485 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ee33656dfc4aec24d9a6d794fbf0aa96, type: 3}
