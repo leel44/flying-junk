@@ -33,7 +33,7 @@ Transform:
   m_Children:
   - {fileID: 532367704885808293}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: -90.00001, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!198 &840068294263815396
 ParticleSystem:
   m_ObjectHideFlags: 0
