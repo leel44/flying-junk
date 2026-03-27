@@ -3182,6 +3182,7 @@ GameObject:
   - component: {fileID: 390161049}
   - component: {fileID: 390161050}
   - component: {fileID: 390161051}
+  - component: {fileID: 390161052}
   m_Layer: 5
   m_Name: PlayButtonNew
   m_TagString: Untagged
@@ -3271,6 +3272,21 @@ MonoBehaviour:
   buttonBaseVisual: {fileID: 1710522575}
   buttonVisual: {fileID: 739061368}
   buttonPushedVisual: {fileID: 520988992}
+--- !u!114 &390161052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 390161048}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0060d89e8e14bfd9f354b4846d5fcb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idleFxObject: {fileID: 0}
+  pressedFxObject: {fileID: 0}
+  pressedFxParticleSystem: {fileID: 0}
 --- !u!1001 &391634098
 PrefabInstance:
   m_ObjectHideFlags: 0
