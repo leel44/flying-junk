@@ -3,7 +3,6 @@ using UnityEngine.EventSystems;
 
 public sealed class PlayButtonNewFeedback : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
 {
-    [SerializeField] private RectTransform scaleRoot;
     [SerializeField] private GameObject buttonBaseVisual;
     [SerializeField] private GameObject buttonVisual;
     [SerializeField] private GameObject buttonPushedVisual;
@@ -13,18 +12,29 @@ public sealed class PlayButtonNewFeedback : MonoBehaviour, IPointerDownHandler, 
 
     private bool isPressed;
     private float releaseElapsed;
-    private Vector3 baseScale = Vector3.one;
+    private RectTransform buttonVisualTransform;
+    private RectTransform buttonPushedVisualTransform;
+    private Vector3 buttonVisualBaseScale = Vector3.one;
+    private Vector3 buttonPushedBaseScale = Vector3.one;
 
     private void Awake()
     {
-        if (scaleRoot == null)
+        if (buttonVisual != null)
         {
-            scaleRoot = transform as RectTransform;
+            buttonVisualTransform = buttonVisual.transform as RectTransform;
+            if (buttonVisualTransform != null)
+            {
+                buttonVisualBaseScale = buttonVisualTransform.localScale;
+            }
         }
 
-        if (scaleRoot != null)
+        if (buttonPushedVisual != null)
         {
-            baseScale = scaleRoot.localScale;
+            buttonPushedVisualTransform = buttonPushedVisual.transform as RectTransform;
+            if (buttonPushedVisualTransform != null)
+            {
+                buttonPushedBaseScale = buttonPushedVisualTransform.localScale;
+            }
         }
 
         ApplyNormalVisual();
@@ -34,38 +44,32 @@ public sealed class PlayButtonNewFeedback : MonoBehaviour, IPointerDownHandler, 
     {
         isPressed = false;
         releaseElapsed = 0f;
-
-        if (scaleRoot != null)
-        {
-            scaleRoot.localScale = baseScale;
-        }
-
+        ResetVisualScales();
         ApplyNormalVisual();
     }
 
     private void Update()
     {
-        if (isPressed || scaleRoot == null || releaseElapsed >= releaseDuration)
+        if (isPressed || buttonVisualTransform == null || releaseElapsed >= releaseDuration)
         {
             return;
         }
 
         releaseElapsed += Time.unscaledDeltaTime;
         var normalizedTime = Mathf.Clamp01(releaseElapsed / Mathf.Max(0.01f, releaseDuration));
-        scaleRoot.localScale = baseScale * EvaluateReleaseScale(normalizedTime);
+        buttonVisualTransform.localScale = buttonVisualBaseScale * EvaluateReleaseScale(normalizedTime);
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
         isPressed = true;
         releaseElapsed = 0f;
-
-        if (scaleRoot != null)
-        {
-            scaleRoot.localScale = baseScale * pressedScale;
-        }
-
         ApplyPressedVisual();
+
+        if (buttonPushedVisualTransform != null)
+        {
+            buttonPushedVisualTransform.localScale = buttonPushedBaseScale * pressedScale;
+        }
     }
 
     public void OnPointerUp(PointerEventData eventData)
@@ -88,6 +92,10 @@ public sealed class PlayButtonNewFeedback : MonoBehaviour, IPointerDownHandler, 
         isPressed = false;
         releaseElapsed = 0f;
         ApplyNormalVisual();
+        if (buttonVisualTransform != null)
+        {
+            buttonVisualTransform.localScale = buttonVisualBaseScale * pressedScale;
+        }
     }
 
     private float EvaluateReleaseScale(float normalizedTime)
@@ -102,10 +110,7 @@ public sealed class PlayButtonNewFeedback : MonoBehaviour, IPointerDownHandler, 
 
     private void ApplyNormalVisual()
     {
-        if (buttonBaseVisual != null)
-        {
-            buttonBaseVisual.SetActive(true);
-        }
+        ResetVisualScales();
 
         if (buttonVisual != null)
         {
@@ -120,10 +125,7 @@ public sealed class PlayButtonNewFeedback : MonoBehaviour, IPointerDownHandler, 
 
     private void ApplyPressedVisual()
     {
-        if (buttonBaseVisual != null)
-        {
-            buttonBaseVisual.SetActive(true);
-        }
+        ResetVisualScales();
 
         if (buttonVisual != null)
         {
@@ -133,6 +135,19 @@ public sealed class PlayButtonNewFeedback : MonoBehaviour, IPointerDownHandler, 
         if (buttonPushedVisual != null)
         {
             buttonPushedVisual.SetActive(true);
+        }
+    }
+
+    private void ResetVisualScales()
+    {
+        if (buttonVisualTransform != null)
+        {
+            buttonVisualTransform.localScale = buttonVisualBaseScale;
+        }
+
+        if (buttonPushedVisualTransform != null)
+        {
+            buttonPushedVisualTransform.localScale = buttonPushedBaseScale;
         }
     }
 }
