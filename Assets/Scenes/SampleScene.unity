@@ -3267,13 +3267,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a6d499a066e4f3bb94439bc7c96af40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scaleRoot: {fileID: 390161049}
   buttonBaseVisual: {fileID: 1710522575}
   buttonVisual: {fileID: 739061368}
   buttonPushedVisual: {fileID: 520988992}
-  pressedScale: 0.93
-  overshootScale: 1.05
-  releaseDuration: 0.14
 --- !u!1001 &391634098
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4890,7 +4886,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 40}
+  m_AnchoredPosition: {x: 0, y: 19.85}
   m_SizeDelta: {x: 360, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &573399999
