@@ -14,11 +14,17 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
     [SerializeField] private AudioClip playButtonClickSfx;
     [SerializeField] [Range(0f, 1f)] private float playButtonClickVolume = 1f;
 
-    [Header("Collect Sfx")]
-    [SerializeField] private AudioClip coinCollectSfx;
-    [SerializeField] [Range(0f, 1f)] private float coinCollectVolume = 1f;
-    [SerializeField] private AudioClip vertoBallCollectSfx;
-    [SerializeField] [Range(0f, 1f)] private float vertoBallCollectVolume = 1f;
+    [Header("Collect Pickup Sfx")]
+    [SerializeField] private AudioClip coinPickupSfx;
+    [SerializeField] [Range(0f, 1f)] private float coinPickupVolume = 1f;
+    [SerializeField] private AudioClip vertoBallPickupSfx;
+    [SerializeField] [Range(0f, 1f)] private float vertoBallPickupVolume = 1f;
+
+    [Header("Collect Ui Confirm Sfx")]
+    [SerializeField] private AudioClip coinUiConfirmSfx;
+    [SerializeField] [Range(0f, 1f)] private float coinUiConfirmVolume = 0.45f;
+    [SerializeField] private AudioClip vertoBallUiConfirmSfx;
+    [SerializeField] [Range(0f, 1f)] private float vertoBallUiConfirmVolume = 0.45f;
 
     [Header("VertoBall Loop Sfx")]
     [SerializeField] private AudioClip vertoBallBuzzLoop;
@@ -119,12 +125,22 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
 
     public void PlayCoinCollect()
     {
-        PlayOneShot(coinCollectSfx, coinCollectVolume);
+        PlayOneShot(coinUiConfirmSfx, coinUiConfirmVolume);
     }
 
     public void PlayVertoBallCollect()
     {
-        PlayOneShot(vertoBallCollectSfx, vertoBallCollectVolume);
+        PlayOneShot(vertoBallUiConfirmSfx, vertoBallUiConfirmVolume);
+    }
+
+    public void PlayCoinPickup()
+    {
+        PlayOneShot(coinPickupSfx, coinPickupVolume);
+    }
+
+    public void PlayVertoBallPickup()
+    {
+        PlayOneShot(vertoBallPickupSfx, vertoBallPickupVolume);
     }
 
     private void EnsureAudioSources()
