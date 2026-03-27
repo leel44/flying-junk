@@ -11,6 +11,8 @@ public sealed class VertoBallAudioEmitter : MonoBehaviour
 
     private void Awake()
     {
+        EnsureAudioSources();
+
         if (visibilityRenderer == null)
         {
             visibilityRenderer = GetComponentInChildren<Renderer>();
@@ -135,6 +137,33 @@ public sealed class VertoBallAudioEmitter : MonoBehaviour
         {
             source.Play();
         }
+    }
+
+    private void EnsureAudioSources()
+    {
+        if (buzzSource == null)
+        {
+            buzzSource = CreateLoopSource("BuzzLoopSource");
+        }
+
+        if (rustleSource == null)
+        {
+            rustleSource = CreateLoopSource("RustleLoopSource");
+        }
+    }
+
+    private AudioSource CreateLoopSource(string sourceName)
+    {
+        var audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.name = sourceName;
+        audioSource.playOnAwake = false;
+        audioSource.loop = true;
+        audioSource.spatialBlend = 1f;
+        audioSource.dopplerLevel = 0f;
+        audioSource.rolloffMode = AudioRolloffMode.Linear;
+        audioSource.minDistance = 1f;
+        audioSource.maxDistance = 15f;
+        return audioSource;
     }
 
     private static void StopLoop(AudioSource source)
