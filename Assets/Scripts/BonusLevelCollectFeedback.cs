@@ -47,10 +47,14 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
     private readonly List<ActiveBounce> activeBounces = new List<ActiveBounce>();
 
     private BonusLevelManager bonusLevelManager;
+    private BonusLevelAudioManager audioManager;
 
     private void Awake()
     {
         bonusLevelManager = FindAnyObjectByType<BonusLevelManager>();
+        audioManager = BonusLevelAudioManager.Instance != null
+            ? BonusLevelAudioManager.Instance
+            : FindAnyObjectByType<BonusLevelAudioManager>();
     }
 
     public void PlayCoinFeedback(Vector3 worldPosition)
@@ -160,6 +164,13 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
             bonusLevelManager = FindAnyObjectByType<BonusLevelManager>();
         }
 
+        if (audioManager == null)
+        {
+            audioManager = BonusLevelAudioManager.Instance != null
+                ? BonusLevelAudioManager.Instance
+                : FindAnyObjectByType<BonusLevelAudioManager>();
+        }
+
         if (bonusLevelManager != null)
         {
             if (feedback.FeedbackType == FeedbackType.Coin)
@@ -169,6 +180,18 @@ public sealed class BonusLevelCollectFeedback : MonoBehaviour
             else
             {
                 bonusLevelManager.PlayVertoBallCounterFx();
+            }
+        }
+
+        if (audioManager != null)
+        {
+            if (feedback.FeedbackType == FeedbackType.Coin)
+            {
+                audioManager.PlayCoinCollect();
+            }
+            else
+            {
+                audioManager.PlayVertoBallCollect();
             }
         }
 

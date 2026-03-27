@@ -42,6 +42,7 @@ public sealed class BonusLevelManager : MonoBehaviour
     private Vector3 timerTextBaseScale = Vector3.one;
     private ParticleSystem[] coinFxSystems;
     private ParticleSystem[] vertoBallFxSystems;
+    private BonusLevelAudioManager audioManager;
 
     public void AddCoin(int amount = 1)
     {
@@ -67,6 +68,10 @@ public sealed class BonusLevelManager : MonoBehaviour
 
     private void Awake()
     {
+        audioManager = BonusLevelAudioManager.Instance != null
+            ? BonusLevelAudioManager.Instance
+            : FindAnyObjectByType<BonusLevelAudioManager>();
+
         if (timerText != null)
         {
             timerTextBaseScale = timerText.rectTransform.localScale;
@@ -129,6 +134,8 @@ public sealed class BonusLevelManager : MonoBehaviour
 
     private void StartLevel()
     {
+        audioManager?.PlayPlayButtonClick();
+
         currentState = BonusLevelState.Playing;
         remainingTime = Mathf.Max(1f, levelDurationSeconds);
         coinCount = 0;
@@ -138,6 +145,7 @@ public sealed class BonusLevelManager : MonoBehaviour
         SetScreenState(showStartScreen: false, showHud: true, showEndScreen: false);
         RefreshCountTexts();
         RefreshTimerText();
+        audioManager?.PlayGameplayMusic();
     }
 
     private void FinishLevel()
@@ -150,6 +158,8 @@ public sealed class BonusLevelManager : MonoBehaviour
         RefreshCountTexts();
         RefreshTimerText();
         ResetTimerWarningVisuals();
+        audioManager?.StopGameplayMusic();
+        audioManager?.PlayFinalFanfare();
     }
 
     private void UpdateTimer()
