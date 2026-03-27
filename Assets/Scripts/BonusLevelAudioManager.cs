@@ -26,6 +26,11 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
     [SerializeField] private AudioClip vertoBallUiConfirmSfx;
     [SerializeField] [Range(0f, 1f)] private float vertoBallUiConfirmVolume = 0.45f;
 
+    [Header("Pitch Randomization")]
+    [SerializeField] private bool enablePitchRandomization = true;
+    [SerializeField] private float pitchMin = 0.97f;
+    [SerializeField] private float pitchMax = 1.03f;
+
     [Header("VertoBall Loop Sfx")]
     [SerializeField] private AudioClip vertoBallBuzzLoop;
     [SerializeField] [Range(0f, 1f)] private float vertoBallBuzzVolume = 1f;
@@ -74,6 +79,7 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
     {
         vertoBallNearDistance = Mathf.Max(0f, vertoBallNearDistance);
         vertoBallFarDistance = Mathf.Max(vertoBallNearDistance, vertoBallFarDistance);
+        pitchMax = Mathf.Max(pitchMin, pitchMax);
 
         if (!Application.isPlaying)
         {
@@ -115,32 +121,32 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
 
     public void PlayFinalFanfare()
     {
-        PlayOneShot(finalFanfareSfx, finalFanfareVolume);
+        PlayOneShot(finalFanfareSfx, finalFanfareVolume, false);
     }
 
     public void PlayPlayButtonClick()
     {
-        PlayOneShot(playButtonClickSfx, playButtonClickVolume);
+        PlayOneShot(playButtonClickSfx, playButtonClickVolume, true);
     }
 
     public void PlayCoinCollect()
     {
-        PlayOneShot(coinUiConfirmSfx, coinUiConfirmVolume);
+        PlayOneShot(coinUiConfirmSfx, coinUiConfirmVolume, true);
     }
 
     public void PlayVertoBallCollect()
     {
-        PlayOneShot(vertoBallUiConfirmSfx, vertoBallUiConfirmVolume);
+        PlayOneShot(vertoBallUiConfirmSfx, vertoBallUiConfirmVolume, true);
     }
 
     public void PlayCoinPickup()
     {
-        PlayOneShot(coinPickupSfx, coinPickupVolume);
+        PlayOneShot(coinPickupSfx, coinPickupVolume, true);
     }
 
     public void PlayVertoBallPickup()
     {
-        PlayOneShot(vertoBallPickupSfx, vertoBallPickupVolume);
+        PlayOneShot(vertoBallPickupSfx, vertoBallPickupVolume, true);
     }
 
     private void EnsureAudioSources()
@@ -185,7 +191,7 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
         sfxSource.spatialBlend = 0f;
     }
 
-    private void PlayOneShot(AudioClip clip, float volume)
+    private void PlayOneShot(AudioClip clip, float volume, bool usePitchRandomization)
     {
         EnsureAudioSources();
         if (sfxSource == null || clip == null)
@@ -193,7 +199,14 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
             return;
         }
 
+        var originalPitch = sfxSource.pitch;
+        if (usePitchRandomization && enablePitchRandomization)
+        {
+            sfxSource.pitch = Random.Range(pitchMin, pitchMax);
+        }
+
         sfxSource.PlayOneShot(clip, volume);
+        sfxSource.pitch = originalPitch;
     }
 
     private AudioSource GetOrAddAudioSource(string sourceName)
