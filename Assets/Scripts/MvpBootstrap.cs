@@ -5,6 +5,9 @@ public sealed class MvpBootstrap : MonoBehaviour
 {
     private const string HoleName = "Hole";
     private const string ObjectName = "SwallowableObject";
+    private const string HoleTrailName = "FxTrail";
+
+    [SerializeField] private GameObject holeTrailPrefab;
 
     private void Awake()
     {
@@ -14,6 +17,7 @@ public sealed class MvpBootstrap : MonoBehaviour
             holeController = CreateHole();
         }
 
+        EnsureHoleTrail(holeController.transform);
         EnsureHoleScareTrigger(holeController.transform);
         SetupCamera(holeController != null ? holeController.transform : null);
 
@@ -118,6 +122,30 @@ public sealed class MvpBootstrap : MonoBehaviour
         }
 
         scareTrigger.EnsureTriggerSetup();
+    }
+
+    private void EnsureHoleTrail(Transform holeTransform)
+    {
+        if (holeTransform == null)
+        {
+            return;
+        }
+
+        if (holeTransform.Find(HoleTrailName) != null)
+        {
+            return;
+        }
+
+        if (holeTrailPrefab == null)
+        {
+            Debug.LogWarning(
+                "MvpBootstrap does not have an FxTrail prefab assigned, so the hole trail effect was not attached.",
+                this);
+            return;
+        }
+
+        var trailInstance = Instantiate(holeTrailPrefab, holeTransform, false);
+        trailInstance.name = HoleTrailName;
     }
 }
 
