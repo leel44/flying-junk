@@ -9,7 +9,10 @@ public sealed class CoinCollectible : MonoBehaviour
     private BonusLevelAudioManager audioManager;
     private HoleController holeController;
     private GameObject holeCoinEatingFxObject;
+    private Transform holeCoinEatingFxTransform;
     private ParticleSystem[] holeCoinEatingParticleSystems;
+    private Vector3 holeCoinEatingBaseLocalScale;
+    private Quaternion holeCoinEatingBaseLocalRotation;
     private bool isCollected;
 
     private void Awake()
@@ -93,18 +96,23 @@ public sealed class CoinCollectible : MonoBehaviour
         }
 
         holeCoinEatingFxObject = fxTransform.gameObject;
+        holeCoinEatingFxTransform = fxTransform;
         holeCoinEatingParticleSystems = fxTransform.GetComponentsInChildren<ParticleSystem>(true);
+        holeCoinEatingBaseLocalScale = fxTransform.localScale;
+        holeCoinEatingBaseLocalRotation = fxTransform.localRotation;
     }
 
     private void PlayHoleCoinEatingFx()
     {
         CacheHoleCoinEatingFx();
-        if (holeCoinEatingFxObject == null)
+        if (holeCoinEatingFxObject == null || holeCoinEatingFxTransform == null)
         {
             Debug.LogWarning("CoinCollectible could not find Hole/FxCoinEating for collect feedback.", this);
             return;
         }
 
+        holeCoinEatingFxTransform.localScale = holeCoinEatingBaseLocalScale;
+        holeCoinEatingFxTransform.localRotation = holeCoinEatingBaseLocalRotation;
         holeCoinEatingFxObject.SetActive(true);
         for (var i = 0; i < holeCoinEatingParticleSystems.Length; i++)
         {

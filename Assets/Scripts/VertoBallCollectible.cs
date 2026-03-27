@@ -3,10 +3,17 @@ using UnityEngine;
 public sealed class VertoBallCollectible : MonoBehaviour
 {
     private const string BubbleFxChildName = "FxBubbleBlast";
+    private const string HoleCoinEatingFxChildName = "FxCoinEating";
 
     private BonusLevelManager bonusLevelManager;
     private BonusLevelCollectFeedback collectFeedback;
     private BonusLevelAudioManager audioManager;
+    private HoleController holeController;
+    private GameObject holeCoinEatingFxObject;
+    private Transform holeCoinEatingFxTransform;
+    private ParticleSystem[] holeCoinEatingParticleSystems;
+    private Vector3 holeCoinEatingBaseLocalScale;
+    private Quaternion holeCoinEatingBaseLocalRotation;
     private bool isCollected;
 
     private void Awake()
@@ -16,6 +23,7 @@ public sealed class VertoBallCollectible : MonoBehaviour
         audioManager = BonusLevelAudioManager.Instance != null
             ? BonusLevelAudioManager.Instance
             : FindAnyObjectByType<BonusLevelAudioManager>();
+        CacheHoleCoinEatingFx();
     }
 
     public void Collect()
@@ -27,6 +35,7 @@ public sealed class VertoBallCollectible : MonoBehaviour
 
         isCollected = true;
 
+        PlayHoleCoinEatingFx();
         PlayDetachedBubbleFx();
         HideCollectedVertoBall();
 
@@ -64,6 +73,63 @@ public sealed class VertoBallCollectible : MonoBehaviour
         }
 
         Destroy(gameObject);
+    }
+
+    private void CacheHoleCoinEatingFx()
+    {
+        if (holeCoinEatingFxObject != null && holeCoinEatingParticleSystems != null && holeCoinEatingParticleSystems.Length > 0)
+        {
+            return;
+        }
+
+        if (holeController == null)
+        {
+            holeController = FindAnyObjectByType<HoleController>();
+        }
+
+        if (holeController == null)
+        {
+            return;
+        }
+
+        var fxTransform = holeController.transform.Find(HoleCoinEatingFxChildName);
+        if (fxTransform == null)
+        {
+            return;
+        }
+
+        holeCoinEatingFxObject = fxTransform.gameObject;
+        holeCoinEatingFxTransform = fxTransform;
+        holeCoinEatingParticleSystems = fxTransform.GetComponentsInChildren<ParticleSystem>(true);
+        holeCoinEatingBaseLocalScale = fxTransform.localScale;
+        holeCoinEatingBaseLocalRotation = fxTransform.localRotation;
+    }
+
+    private void PlayHoleCoinEatingFx()
+    {
+        CacheHoleCoinEatingFx();
+        if (holeCoinEatingFxObject == null || holeCoinEatingFxTransform == null)
+        {
+            Debug.LogWarning("VertoBallCollectible could not find Hole/FxCoinEating for collect feedback.", this);
+            return;
+        }
+
+        holeCoinEatingFxTransform.localScale = holeCoinEatingBaseLocalScale * Random.Range(1.2f, 1.6f);
+        holeCoinEatingFxTransform.localRotation =
+            holeCoinEatingBaseLocalRotation * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+
+        holeCoinEatingFxObject.SetActive(true);
+        for (var i = 0; i < holeCoinEatingParticleSystems.Length; i++)
+        {
+            var particleSystem = holeCoinEatingParticleSystems[i];
+            if (particleSystem == null)
+            {
+                continue;
+            }
+
+            particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particleSystem.Play(true);
+        }
     }
 
     private void PlayDetachedBubbleFx()
