@@ -31,6 +31,13 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
     [SerializeField] private float pitchMin = 0.97f;
     [SerializeField] private float pitchMax = 1.03f;
 
+    [Header("Hole Movement Sfx")]
+    [SerializeField] private AudioClip holeMoveLoop;
+    [SerializeField] [Range(0f, 1f)] private float holeMoveVolume = 0.25f;
+    [SerializeField] private float holeMoveFadeInSpeed = 8f;
+    [SerializeField] private float holeMoveFadeOutSpeed = 10f;
+    [SerializeField] private float holeMoveMinSpeedThreshold = 0.02f;
+
     [Header("VertoBall Loop Sfx")]
     [SerializeField] private AudioClip vertoBallBuzzLoop;
     [SerializeField] [Range(0f, 1f)] private float vertoBallBuzzVolume = 1f;
@@ -45,6 +52,7 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
     [Header("Internal Sources")]
     [SerializeField] private AudioSource gameplayMusicSource;
     [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private AudioSource holeMoveSource;
 
     public AudioClip VertoBallBuzzLoop => vertoBallBuzzLoop;
     public float VertoBallBuzzVolume => vertoBallBuzzVolume;
@@ -53,6 +61,10 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
     public float VertoBallNearDistance => Mathf.Max(0f, vertoBallNearDistance);
     public float VertoBallFarDistance => Mathf.Max(VertoBallNearDistance, vertoBallFarDistance);
     public bool RequireCameraVisibilityForVertoBallLoops => requireCameraVisibilityForVertoBallLoops;
+
+    private HoleController holeController;
+    private Vector3 previousHolePosition;
+    private bool hasPreviousHolePosition;
 
     private void Awake()
     {
@@ -75,11 +87,19 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        UpdateHoleMovementLoop(Time.unscaledDeltaTime);
+    }
+
     private void OnValidate()
     {
         vertoBallNearDistance = Mathf.Max(0f, vertoBallNearDistance);
         vertoBallFarDistance = Mathf.Max(vertoBallNearDistance, vertoBallFarDistance);
         pitchMax = Mathf.Max(pitchMin, pitchMax);
+        holeMoveFadeInSpeed = Mathf.Max(0f, holeMoveFadeInSpeed);
+        holeMoveFadeOutSpeed = Mathf.Max(0f, holeMoveFadeOutSpeed);
+        holeMoveMinSpeedThreshold = Mathf.Max(0f, holeMoveMinSpeedThreshold);
 
         if (!Application.isPlaying)
         {
@@ -89,6 +109,7 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
         EnsureAudioSources();
         ApplyMusicSourceSettings();
         ApplySfxSourceSettings();
+        ApplyHoleMoveSourceSettings();
     }
 
     public void PlayGameplayMusic()
@@ -161,8 +182,14 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
             sfxSource = GetOrAddAudioSource("SfxSource");
         }
 
+        if (holeMoveSource == null)
+        {
+            holeMoveSource = GetOrAddAudioSource("HoleMoveSource");
+        }
+
         ApplyMusicSourceSettings();
         ApplySfxSourceSettings();
+        ApplyHoleMoveSourceSettings();
     }
 
     private void ApplyMusicSourceSettings()
@@ -191,6 +218,23 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
         sfxSource.spatialBlend = 0f;
     }
 
+    private void ApplyHoleMoveSourceSettings()
+    {
+        if (holeMoveSource == null)
+        {
+            return;
+        }
+
+        holeMoveSource.playOnAwake = false;
+        holeMoveSource.loop = true;
+        holeMoveSource.spatialBlend = 0f;
+        holeMoveSource.clip = holeMoveLoop;
+        if (!holeMoveSource.isPlaying)
+        {
+            holeMoveSource.volume = 0f;
+        }
+    }
+
     private void PlayOneShot(AudioClip clip, float volume, bool usePitchRandomization)
     {
         EnsureAudioSources();
@@ -207,6 +251,80 @@ public sealed class BonusLevelAudioManager : MonoBehaviour
 
         sfxSource.PlayOneShot(clip, volume);
         sfxSource.pitch = originalPitch;
+    }
+
+    private void UpdateHoleMovementLoop(float deltaTime)
+    {
+        EnsureAudioSources();
+        if (holeMoveSource == null)
+        {
+            return;
+        }
+
+        if (holeController == null)
+        {
+            holeController = FindAnyObjectByType<HoleController>();
+            if (holeController != null)
+            {
+                previousHolePosition = holeController.transform.position;
+                hasPreviousHolePosition = true;
+            }
+        }
+
+        if (holeController == null || holeMoveLoop == null)
+        {
+            FadeOutAndStopHoleMoveLoop(deltaTime);
+            return;
+        }
+
+        var currentHolePosition = holeController.transform.position;
+        if (!hasPreviousHolePosition)
+        {
+            previousHolePosition = currentHolePosition;
+            hasPreviousHolePosition = true;
+        }
+
+        var movementDelta = (currentHolePosition - previousHolePosition).magnitude;
+        previousHolePosition = currentHolePosition;
+
+        if (movementDelta > holeMoveMinSpeedThreshold)
+        {
+            if (holeMoveSource.clip != holeMoveLoop)
+            {
+                holeMoveSource.clip = holeMoveLoop;
+            }
+
+            if (!holeMoveSource.isPlaying)
+            {
+                holeMoveSource.Play();
+            }
+
+            holeMoveSource.volume = Mathf.MoveTowards(
+                holeMoveSource.volume,
+                holeMoveVolume,
+                holeMoveFadeInSpeed * deltaTime);
+            return;
+        }
+
+        FadeOutAndStopHoleMoveLoop(deltaTime);
+    }
+
+    private void FadeOutAndStopHoleMoveLoop(float deltaTime)
+    {
+        if (holeMoveSource == null)
+        {
+            return;
+        }
+
+        holeMoveSource.volume = Mathf.MoveTowards(
+            holeMoveSource.volume,
+            0f,
+            holeMoveFadeOutSpeed * deltaTime);
+
+        if (holeMoveSource.isPlaying && holeMoveSource.volume <= 0.001f)
+        {
+            holeMoveSource.Stop();
+        }
     }
 
     private AudioSource GetOrAddAudioSource(string sourceName)
